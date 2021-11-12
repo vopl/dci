@@ -1,0 +1,114 @@
+[submodule "core-aup"]
+	path = source/core/aup
+	url = ../dci-core-aup
+[submodule "core-bytes"]
+	path = source/core/bytes
+	url = ../dci-core-bytes
+[submodule "core-cmt"]
+	path = source/core/cmt
+	url = ../dci-core-cmt
+[submodule "core-config"]
+	path = source/core/config
+	url = ../dci-core-config
+[submodule "core-crypto"]
+	path = source/core/crypto
+	url = ../dci-core-crypto
+[submodule "core-exception"]
+	path = source/core/exception
+	url = ../dci-core-exception
+[submodule "core-himpl"]
+	path = source/core/himpl
+	url = ../dci-core-himpl
+[submodule "core-host"]
+	path = source/core/host
+	url = ../dci-core-host
+[submodule "core-idl"]
+	path = source/core/idl
+	url = ../dci-core-idl
+[submodule "core-integration"]
+	path = source/core/integration
+	url = ../dci-core-integration
+[submodule "core-logger"]
+	path = source/core/logger
+	url = ../dci-core-logger
+[submodule "core-mm"]
+	path = source/core/mm
+	url = ../dci-core-mm
+[submodule "core-poll"]
+	path = source/core/pollaup
+	url = ../dci-core-poll
+[submodule "core-primitives"]
+	path = source/core/primitives
+	url = ../dci-core-primitives
+[submodule "core-qml"]
+	path = source/core/qml
+	url = ../dci-core-qml
+[submodule "core-sbs"]
+	path = source/core/sbs
+	url = ../dci-core-sbs
+[submodule "core-stiac"]
+	path = source/core/stiac
+	url = ../dci-core-stiac
+[submodule "core-test"]
+	path = source/core/test
+	url = ../dci-core-test
+[submodule "core-utils"]
+	path = source/core/utils
+	url = ../dci-core-utils
+[submodule "module-stiac"]
+	path = source/module/stiac
+	url = ../dci-module-stiac
+[submodule "module-example"]
+	path = source/module/example
+	url = ../dci-module-example
+[submodule "module-net"]
+	path = source/module/net
+	url = ../dci-module-net
+[submodule "module-ppn-connectivity-demand"]
+	path = source/module/ppn-connectivity-demand
+	url = ../dci-module-ppn-connectivity-demand
+[submodule "module-ppn-connectivity-joining"]
+	path = source/module/ppn-connectivity-joining
+	url = ../dci-module-ppn-connectivity-joining
+[submodule "module-ppn-connectivity-reest"]
+	path = source/module/ppn-connectivity-reest
+	url = ../dci-module-ppn-connectivity-reest
+[submodule "module-ppn-discovery-local"]
+	path = source/module/ppn-discovery-local
+	url = ../dci-module-ppn-discovery-local
+[submodule "module-ppn-discovery-peer"]
+	path = source/module/ppn-discovery-peer
+	url = ../dci-module-ppn-discovery-peer
+[submodule "module-ppn-node"]
+	path = source/module/ppn-node
+	url = ../dci-module-ppn-node
+[submodule "module-ppn-node-link"]
+	path = source/module/ppn-node-link
+	url = ../dci-module-ppn-node-link
+[submodule "module-ppn-node-logger"]
+	path = source/module/ppn-node-logger
+	url = ../dci-module-ppn-node-logger
+[submodule "module-ppn-node-rdb"]
+	path = source/module/ppn-node-rdb
+	url = ../dci-module-ppn-node-rdb
+[submodule "module-ppn-service-aup"]
+	path = source/module/ppn-service-aup
+	url = ../dci-module-ppn-service-aup
+[submodule "module-ppn-service-dht"]
+	path = source/module/ppn-service-dht
+	url = ../dci-module-ppn-service-dht
+[submodule "module-ppn-topology-lis"]
+	path = source/module/ppn-topology-lis
+	url = ../dci-module-ppn-topology-lis
+[submodule "module-ppn-transport"]
+	path = source/module/ppn-transport
+	url = ../dci-module-ppn-transport
+[submodule "module-ppn-transport-inproc"]
+	path = source/module/ppn-transport-inproc
+	url = ../dci-module-ppn-transport-inproc
+[submodule "module-ppn-transport-natt"]
+	path = source/module/ppn-transport-natt
+	url = ../dci-module-ppn-transport-natt
+[submodule "module-ppn-transport-net"]
+	path = source/module/ppn-transport-net
+	url = ../dci-module-ppn-transport-net
