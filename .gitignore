@@ -1,0 +1,14 @@
+bin/*
+etc/*
+var/*
+idl/*
+include/*
+cmakeModules/*
+lib/*
+module/*
+test/*
+tmp/*
+
+*.user
+*.user.*
+

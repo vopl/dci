@@ -1,0 +1,36 @@
+
+targetDir ..
+stateDir ../var/aup
+;importDir ../var/aups4Import
+
+target
+{
+    srcBranch            master
+    srcRevision          *
+    platformOs           same
+    platformArch         same
+    compiler             same
+    compilerVersion      *
+    compilerOptimization same
+    provider             same
+    stability            0
+    signer               ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    unit                 *
+    fileKind             minimal
+}
+
+buffer
+{
+    srcBranch **
+    srcRevision *
+    platformOs *
+    platformArch *
+    compiler *
+    compilerVersion *
+    compilerOptimization *
+    provider *
+    stability *
+    signer *
+    unit *
+    fileKind *
+}
