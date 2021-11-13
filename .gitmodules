@@ -35,7 +35,7 @@
 	path = source/core/mm
 	url = ../dci-core-mm
 [submodule "core-poll"]
-	path = source/core/pollaup
+	path = source/core/poll
 	url = ../dci-core-poll
 [submodule "core-primitives"]
 	path = source/core/primitives
