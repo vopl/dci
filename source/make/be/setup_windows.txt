@@ -1,0 +1,33 @@
+
+msys.sh
+
+pacman -S --needed mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-pywin32 mingw-w64-x86_64-python-certifi mingw-w64-x86_64-python-cffi mingw-w64-x86_64-python-setuptools-rust
+
+pip install --upgrade pip
+
+взять сырцы https://pypi.org/project/twisted-iocpsupport/#files, в заголовке поменять объекты на extern, сами объекты разместит в .c
+pip install ./twisted-iocpsupport-1.0.2
+
+
+(из за длинных путей не собирается, не находит -lpython3)
+взять сырцы https://pypi.org/project/cryptography/#files, распаковать
+скопировать C:\msys64\mingw64\lib\libpython3.9.dll.a -> libpython3.dll.a
+инсталировать из папки чтобы пути были покороче
+
+pip install twisted[tls] buildbot-worker
+
+buildbot-worker create-worker bb-worker bb.shtoba.net windows10 scout
+
+---------------
+Add a Scheduled Task to run buildbot-worker start buildarea as the buildbot user “when the computer starts up”. It is best to provide 
+absolute paths to the buildbot-worker command and the buildarea directory. It is also recommended to set the task to run in the directory that contains the buildarea directory.
+
+c:\msys64\usr\bin\env MSYSTEM=MINGW64 c:\msys64\usr\bin\bash -l -c "~/bb-worker.sh"
+
+cat bb-worker.sh && echo EOFFFF
+#!/bin/bash
+export NPROC=`nproc`
+export AUPSDIR=/home/Administrator/dci-aups
+
+buildbot-worker start ./bb-worker
+EOFFFF

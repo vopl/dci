@@ -54,8 +54,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb3")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb3")
 
 ###################################################################################
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=x86-64 -UNDEBUG -Ofast -fomit-frame-pointer -fno-stack-protector")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=x86-64 -UNDEBUG -Ofast -fomit-frame-pointer -fno-stack-protector")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=x86-64 -UNDEBUG -Ofast")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=x86-64 -UNDEBUG -Ofast")
 
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE On)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO On)
@@ -74,25 +74,25 @@ set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,
 ##########################################################################################
 file(GLOB units1 ${CMAKE_CURRENT_LIST_DIR}/source/core/*/CMakeLists.txt)
 file(GLOB units2 ${CMAKE_CURRENT_LIST_DIR}/source/module/*/CMakeLists.txt)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/source/core/integration/cmakeModules)
 include(dciIntegration)
 dciIntegration(
     UNIT_SCRIPTS            ${units1} ${units2}
-    SRC_DIR                 ${CMAKE_CURRENT_SOURCE_DIR}
+#    SRC_DIR                 ${CMAKE_CURRENT_SOURCE_DIR}
 
-    OUT_DIR                 $ENV{DCI_OUT_DIR}
-    BE_DIR                  $ENV{DCI_BE_DIR}
-    SRC_BRANCH              $ENV{DCI_SRC_BRANCH}
-    SRC_REVISION            $ENV{DCI_SRC_REVISION}
-    PLATFORM_OS             $ENV{PLATFORM_OS}
-    PLATFORM_ARCH           $ENV{PLATFORM_ARCH}
-    COMPILER                $ENV{COMPILER}
-    COMPILER_VERSION        $ENV{COMPILER_VERSION}
-    COMPILER_OPTIMIZATION   $ENV{DCI_COMPILER_OPTIMIZATION}
-    PROVIDER                $ENV{DCI_PROVIDER}
-    AUP_SIGNERKEY           $ENV{DCI_AUP_SIGNERKEY}
-    BUILD_TESTS             On
-    STRIP_DEBUG             Off
-    SEPARATE_DEBUG          On
+#    OUT_DIR                 $ENV{DCI_OUT_DIR}
+#    BE_DIR                  $ENV{DCI_BE_DIR}
+#    SRC_BRANCH              $ENV{DCI_SRC_BRANCH}
+#    SRC_REVISION            $ENV{DCI_SRC_REVISION}
+#    PLATFORM_OS             $ENV{DCI_PLATFORM_OS}
+#    PLATFORM_ARCH           $ENV{DCI_PLATFORM_ARCH}
+#    COMPILER                $ENV{DCI_COMPILER}
+#    COMPILER_VERSION        $ENV{DCI_COMPILER_VERSION}
+#    COMPILER_OPTIMIZATION   $ENV{DCI_COMPILER_OPTIMIZATION}
+#    PROVIDER                $ENV{DCI_PROVIDER}
+#    AUP_SIGNERKEY           $ENV{DCI_AUP_SIGNERKEY}
+
+#    BUILD_TESTS             On
+#    STRIP_DEBUG             Off
+#    SEPARATE_DEBUG          Off
 )

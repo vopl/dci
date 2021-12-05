@@ -4,11 +4,13 @@
 from buildbot.plugins import *
 import time
 
+############################################################################################################
 bbfileSteps=[]
 
-bbfileSteps.append(steps.RemoveDirectory(
-    name = 'clean build directory',
-    dir = "build",))
+#######
+#bbfileSteps.append(steps.RemoveDirectory(
+#    name = 'clean build directory',
+#    dir = "build",))
 
 bbfileSteps.append(steps.SetPropertiesFromEnv(
     name = 'load bb properties',
@@ -40,12 +42,19 @@ bbfileSteps.append(steps.Compile(
     warnOnWarnings = True,))
 
 #######
+@util.renderer
+def dciHostCmd(props):
+    if 'windows'==props.getProperty('buildername'):
+        return 'dci-host.cmd'
+    return './dci-host'
+
+#######
 def appendTests(workdir, label):
     for stage in ['noenv', 'mnone', 'mstart']:
         bbfileSteps.append(steps.Test(
             name = f'test {stage} ({label})',
             workdir = workdir,
-            command = ['./dci-host', '--test', stage],
+            command = [util.Interpolate('%(kw:exe)s', exe=dciHostCmd), '--test', stage],
             warningPattern = "^....-..-.. ..:..:...... (WRN|ERR|FTL): ",
             env = {'QT_QPA_PLATFORM': 'minimal'},
             haltOnFailure = True,
@@ -66,7 +75,7 @@ bbfileSteps.append(steps.Compile(
 bbfileSteps.append(steps.ShellCommand(
     name = 'apply aup',
     workdir = 'build/out/bin',
-    command = ['./dci-host', '--aup', 'targetDir=../../out2', 'stateDir=../var/aup', 'target.fileKind=*'],))
+    command = [util.Interpolate('%(kw:exe)s', exe=dciHostCmd), '--aup', 'targetDir=../../out2', 'stateDir=../var/aup', 'target.fileKind=*'],))
 
 #######
 appendTests('build/out2/bin', 'after aup')
@@ -81,6 +90,6 @@ bbfileSteps.append(steps.ShellCommand(
     workdir = 'build/out/var',
     command = ['mv', "-v", "--no-target-directory", "aup", util.Interpolate('%(prop:AUPSDIR:-aups)s/%(kw:aupDir)s', aupDir=aupDir)],))
 
-bbfileSteps.append(steps.RemoveDirectory(
-    name = 'clean build directory again',
-    dir = "build",))
+#bbfileSteps.append(steps.RemoveDirectory(
+#    name = 'clean build directory again',
+#    dir = "build",))
