@@ -84,6 +84,7 @@ dciIntegration(
 #    BE_DIR                  $ENV{DCI_BE_DIR}
 #    SRC_BRANCH              $ENV{DCI_SRC_BRANCH}
 #    SRC_REVISION            $ENV{DCI_SRC_REVISION}
+#    SRC_MOMENT              $ENV{DCI_SRC_MOMENT}
 #    PLATFORM_OS             $ENV{DCI_PLATFORM_OS}
 #    PLATFORM_ARCH           $ENV{DCI_PLATFORM_ARCH}
 #    COMPILER                $ENV{DCI_COMPILER}
