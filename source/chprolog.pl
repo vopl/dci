@@ -4,7 +4,7 @@ use strict;
 use File::Find;
 
 my $prolog = <<EOP;
-/* This file is part of the the dci project. Copyright (C) 2013-2021 vopl, shtoba.
+/* This file is part of the the dci project. Copyright (C) 2013-2022 vopl, shtoba.
    This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public
    License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
    This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
