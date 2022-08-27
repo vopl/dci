@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh qt https://download.qt.io/development_releases/qt/6.2/6.2.0-beta2/single/qt-everywhere-src-6.2.0-beta2.tar.xz de3d229cc60f2c996c03d42179a7e35a0e9f8b3e5e39848f2853070a00c7080f
+${CDIR}/prepareBuild.sh qt https://download.qt.io/official_releases/qt/6.3/6.3.1/single/qt-everywhere-src-6.3.1.tar.xz 51114e789485fdb6b35d112dfd7c7abb38326325ac51221b6341564a1c3cc726
 cd ${WDIR}/qt
 
 if [ ! -f "install.stamp" ]; then
@@ -16,7 +16,7 @@ if [ ! -f "install.stamp" ]; then
     export CXXFLAGS=${LOCAL_CXXFLAGS}
     export LDFLAGS=${LOCAL_LDFLAGS}
 
-    ../qt-everywhere-src-6.2.0-beta2/configure \
+    ../qt-everywhere-src-6.3.1/configure \
         \
         -prefix         ${PREFIX} \
         -bindir         ${PREFIX}/bin \
@@ -51,46 +51,47 @@ if [ ! -f "install.stamp" ]; then
         -nomake manual-tests \
         -nomake minimal-static-tests \
         \
-        -skip qt3d \
-        -skip qt5compat \
-        -skip qtactiveqt \
-        -skip qtcanvas3d \
-        -skip qtcoap \
-        -skip qtconnectivity \
-        -skip qtdatavis3d \
-        -skip qtdoc \
-        -skip qtfeedback \
-        -skip qtgamepad \
-        -skip qtlocation \
-        -skip qtlottie \
-        -skip qtmqtt \
-        -skip qtmultimedia \
-        -skip qtnetworkauth \
-        -skip qtopcua \
-        -skip qtpim \
-        -skip qtpurchasing \
-        -skip qtqa \
-        -skip qtquick3d \
-        -skip qtquickcontrols \
-        -skip qtremoteobjects \
-        -skip qtrepotools \
-        -skip qtscxml \
-        -skip qtsensors \
-        -skip qtserialbus \
-        -skip qtserialport \
-        -skip qtspeech \
-        -skip qtvirtualkeyboard \
-        -skip qtwayland \
-        -skip qtwebchannel \
-        -skip qtwebengine \
-        -skip qtwebglplugin \
-        -skip qtwebsockets \
-        -skip qtwebview \
-        -skip qtmultimedia \
-        -skip qtquick3d \
-        -skip qtwebengine \
-        -skip qtwayland \
-        \
+        
+        #-skip qt3d \
+        #-skip qt5compat \
+        #-skip qtactiveqt \
+        #-skip qtcanvas3d \
+        #-skip qtcoap \
+        #-skip qtconnectivity \
+        #-skip qtdatavis3d \
+        #-skip qtdoc \
+        #-skip qtfeedback \
+        #-skip qtgamepad \
+        #-skip qtlocation \
+        #-skip qtlottie \
+        #-skip qtmqtt \
+        #-skip qtmultimedia \
+        #-skip qtnetworkauth \
+        #-skip qtopcua \
+        #-skip qtpim \
+        #-skip qtpurchasing \
+        #-skip qtqa \
+        #-skip qtquick3d \
+        #-skip qtquickcontrols \
+        #-skip qtremoteobjects \
+        #-skip qtrepotools \
+        #-skip qtscxml \
+        #-skip qtsensors \
+        #-skip qtserialbus \
+        #-skip qtserialport \
+        #-skip qtspeech \
+        #-skip qtvirtualkeyboard \
+        #-skip qtwayland \
+        #-skip qtwebchannel \
+        #-skip qtwebengine \
+        #-skip qtwebglplugin \
+        #-skip qtwebsockets \
+        #-skip qtwebview \
+        #-skip qtmultimedia \
+        #-skip qtquick3d \
+        #-skip qtwebengine \
+        #-skip qtwayland \
+        #\
 
         #-release -force-debug-info \
         #-recheck-all

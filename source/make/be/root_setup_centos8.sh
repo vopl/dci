@@ -1,7 +1,6 @@
 #!/bin/bash
 #virtualbox + CentOS-8
-#https://linuxhint.com/install_centos8_netboot_iso/
-#http://isoredirect.centos.org/centos/8/isos/x86_64/
+#http://isoredirect.centos.org/centos/8-stream/isos/x86_64/
 
 set -e
 
@@ -23,6 +22,7 @@ dnf -y install libXxf86dga-devel libXxf86misc-devel libXxf86vm-devel libfontenc-
 dnf -y install libXrender-devel libxkbcommon-devel libxkbcommon-x11-devel libxkbfile-devel
 dnf -y install pulseaudio-libs-devel
 dnf -y install libjpeg-turbo-devel libpng-devel
+dnf -y install perl-Pod-Html
 
 dnf -y install git
 

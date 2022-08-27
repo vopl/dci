@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh icu https://github.com/unicode-org/icu/archive/release-68-2.tar.gz f790b0202facbbf19c5581a7a5f21b2b4b6ed70ba3e4bef8d5560868e5e82476
+${CDIR}/prepareBuild.sh icu https://github.com/unicode-org/icu/archive/refs/tags/release-71-1.tar.gz d88a4ea7a4a28b445bb073a6cfeb2a296bf49a4a2fe5f1b49f87ecb4fc55c51d
 cd ${WDIR}/icu
 
 if [ ! -f "install.stamp" ]; then
@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../icu-release-68-2/icu4c/source/runConfigureICU Linux/gcc --prefix=${PREFIX} --libdir=${LIBDIR}
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../icu-release-71-1/icu4c/source/runConfigureICU Linux/gcc --prefix=${PREFIX} --libdir=${LIBDIR}
     make -j`nproc`
     make install
 

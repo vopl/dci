@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh cmake https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0.tar.gz 9c06b2ddf7c337e31d8201f6ebcd3bba86a9a033976a9aee207fe0c6971f4755
+${CDIR}/prepareBuild.sh cmake https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1.tar.gz 4931e277a4db1a805f13baa7013a7757a0cbfe5b7932882925c7061d9d1fa82b
 cd ${WDIR}/cmake
 
 if [ ! -f "install.stamp" ]; then
@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" CMAKE_PREFIX_PATH=${PREFIX} ../cmake-3.20.0/configure --prefix=${PREFIX} --parallel=10
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" CMAKE_PREFIX_PATH=${PREFIX} ../cmake-3.24.1/configure --prefix=${PREFIX} --parallel=10
     make -j`nproc`
     make install
 

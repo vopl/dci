@@ -9,11 +9,11 @@ if [[ "$stage" == "" ]]; then
 fi
 
 #################################
-${CDIR}/prepareBuild.sh gcc https://ftp.gnu.org/gnu/gcc/gcc-11.2.0/gcc-11.2.0.tar.xz d08edc536b54c372a1010ff6619dd274c0f1603aa49212ba20f7aa2cda36fa8b
+${CDIR}/prepareBuild.sh gcc https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.xz e549cf9cf3594a00e27b6589d4322d70e0720cdd213f39beb4181e06926230ff
 cd ${WDIR}/gcc
 
 if [ ! -f "prerequisites.stamp" ]; then
-    (cd gcc-11.2.0 && ./contrib/download_prerequisites)
+    (cd gcc-12.2.0 && ./contrib/download_prerequisites)
     touch prerequisites.stamp
 fi
 
@@ -28,7 +28,7 @@ if [ ! -f "install-${stage}.stamp" ]; then
         CFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CFLAGS}" \
         CXXFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CXXFLAGS}" \
         LDFLAGS_FOR_TARGET="${LOCAL_LDFLAGS}" \
-        ../gcc-11.2.0/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
+        ../gcc-12.2.0/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
             --disable-multilib --disable-multiarch \
             --enable-gold=yes --enable-ld=yes \
             --enable-compressed-debug-sections=all \

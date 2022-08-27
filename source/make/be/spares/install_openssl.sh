@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh openssl https://www.openssl.org/source/openssl-1.1.1k.tar.gz 892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5
+${CDIR}/prepareBuild.sh openssl https://www.openssl.org/source/openssl-1.1.1q.tar.gz d7939ce614029cdff0b6c20f0e2e5703158a489a72b2507b8bd51bf8c8fd10ca
 cd ${WDIR}/openssl
 
 if [ ! -f "install.stamp" ]; then
@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../openssl-1.1.1k/Configure \
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../openssl-1.1.1q/Configure \
         --prefix=${PREFIX} --libdir=${LIBDIR} --openssldir=${PREFIX}/ssl \
         enable-camellia \
         enable-ec \

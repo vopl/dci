@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh gdb https://ftp.gnu.org/gnu/gdb/gdb-10.1.tar.xz f82f1eceeec14a3afa2de8d9b0d3c91d5a3820e23e0a01bbb70ef9f0276b62c0
+${CDIR}/prepareBuild.sh gdb https://ftp.gnu.org/gnu/gdb/gdb-12.1.tar.xz 0e1793bf8f2b54d53f46dea84ccfd446f48f81b297b28c4f7fc017b818d69fed
 cd ${WDIR}/gdb
 
 if [ ! -f "install.stamp" ]; then
@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../gdb-10.1/configure --prefix=${PREFIX} --libdir=${LIBDIR} --enable-gold=yes --enable-ld=yes --enable-compressed-debug-sections=all --with-python
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../gdb-12.1/configure --prefix=${PREFIX} --libdir=${LIBDIR} --enable-gold=yes --enable-ld=yes --enable-compressed-debug-sections=all --with-python
     make -j`nproc`
     make install
 

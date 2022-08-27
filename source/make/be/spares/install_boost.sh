@@ -4,13 +4,13 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh boost https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2 f0397ba6e982c4450f27bf32a2a83292aba035b827a5623a14636ea583318c41
+${CDIR}/prepareBuild.sh boost https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2 1e19565d82e43bc59209a168f5ac899d3ba471d55c7610c677d4ccf2c9c500c0
 cd ${WDIR}/boost
 
 if [ ! -f "install.stamp" ]; then
 
     mkdir -p stage
-    pushd boost_1_76_0
+    pushd boost_1_80_0
         ./bootstrap.sh --prefix=${PREFIX} --libdir=${LIBDIR}
         ./b2 \
             --prefix=${PREFIX} --libdir=${LIBDIR} \
