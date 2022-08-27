@@ -17,18 +17,23 @@ ${CDIR}/spares/install_binutils.sh 2
 
 ${CDIR}/spares/install_chrpath.sh
 ${CDIR}/spares/install_gmp.sh
-${CDIR}/spares/install_gdb.sh
 ${CDIR}/spares/install_valgrind.sh
 
 ${CDIR}/spares/install_zlib.sh
 ${CDIR}/spares/install_zstd.sh
+${CDIR}/spares/install_libarchive.sh
+${CDIR}/spares/install_libmicrohttpd.sh
 ${CDIR}/spares/install_openssl.sh
+${CDIR}/spares/install_curl.sh
+${CDIR}/spares/install_sqlite.sh
+${CDIR}/spares/install_elfutils.sh
+${CDIR}/spares/install_gdb.sh
+
 ${CDIR}/spares/install_openssh.sh
 
 ${CDIR}/spares/install_icu.sh
 ${CDIR}/spares/install_boost.sh
 ${CDIR}/spares/install_libxml.sh
-${CDIR}/spares/install_sqlite.sh
 ${CDIR}/spares/install_pcre.sh
 
 ${CDIR}/spares/install_cmake.sh
@@ -38,7 +43,6 @@ ${CDIR}/spares/install_gtest.sh
 ${CDIR}/spares/install_qt.sh
 ${CDIR}/spares/install_opensans.sh
 
-${CDIR}/spares/install_curl.sh
 ${CDIR}/spares/install_git.sh
 
 #-------------------------------------------------------------------

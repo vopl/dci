@@ -12,7 +12,19 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../gdb-12.1/configure --prefix=${PREFIX} --libdir=${LIBDIR} --enable-gold=yes --enable-ld=yes --enable-compressed-debug-sections=all --with-python
+    export LDFLAGS="${LOCAL_LDFLAGS}"
+    export CFLAGS="${LOCAL_CFLAGS}"
+    export CXXFLAGS="${LOCAL_CXXFLAGS}"
+    export DEBUGINFOD_CFLAGS="${LOCAL_LDFLAGS} ${LOCAL_CFLAGS}"
+    export DEBUGINFOD_LIBS="${LOCAL_LDFLAGS} -ldebuginfod"
+    
+    ../gdb-12.1/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
+        --enable-gold=yes \
+        --enable-ld=yes \
+        --enable-compressed-debug-sections=all \
+        --with-python \
+        --with-debuginfod
+    
     make -j`nproc`
     make install
 
