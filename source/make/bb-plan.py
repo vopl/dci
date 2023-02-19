@@ -23,11 +23,12 @@ bbfileSteps.append(steps.CMake(
     path = '../src',
     generator = 'Ninja',
     definitions  = {
-        'CMAKE_BUILD_TYPE' : 'Release',
-        'DCI_SRC_BRANCH'   : util.Interpolate("%(prop:branch:-)s"),
-        'DCI_SRC_REVISION' : util.Interpolate("%(prop:revision:-)s"),
-        'DCI_PROVIDER'     : 'bb',
-        'DCI_AUP_SIGNERKEY': util.Interpolate("%(secret:signerKey:-)s"),
+        'CMAKE_BUILD_TYPE'      : 'Release',
+        'DCI_SRC_BRANCH'        : util.Interpolate("%(prop:branch:-)s"),
+        'DCI_SRC_REVISION'      : util.Interpolate("%(prop:revision:-)s"),
+        'DCI_REPRODUCIBLE_BUILD': 'On',
+        'DCI_PROVIDER'          : 'bb',
+        'DCI_AUP_SIGNERKEY'     : util.Interpolate("%(secret:signerKey:-)s"),
     },
     haltOnFailure = True,
     warnOnWarnings = True,))
