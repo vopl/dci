@@ -4,10 +4,10 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh elfutils https://sourceware.org/elfutils/ftp/0.187/elfutils-0.187.tar.bz2 e70b0dfbe610f90c4d1fe0d71af142a4e25c3c4ef9ebab8d2d72b65159d454c8
+${CDIR}/prepareBuild.sh elfutils https://sourceware.org/elfutils/ftp/0.190/elfutils-0.190.tar.bz2 8e00a3a9b5f04bc1dc273ae86281d2d26ed412020b391ffcc23198f10231d692
 cd ${WDIR}/elfutils
 
-if [ ! -f "install-${stage}.stamp" ]; then
+if [ ! -f "install.stamp" ]; then
 
     mkdir -p build
     pushd build
@@ -22,7 +22,8 @@ if [ ! -f "install-${stage}.stamp" ]; then
         libarchive_LIBS="${LOCAL_LDFLAGS} -larchive" \
         libmicrohttpd_CFLAGS="${LOCAL_LDFLAGS} ${LOCAL_CFLAGS}" \
         libmicrohttpd_LIBS="${LOCAL_LDFLAGS} -lmicrohttpd" \
-        ../elfutils-0.187/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
+        ZSTD_COMPRESS_LIBS="${LOCAL_LDFLAGS} -lzstd" \
+        ../elfutils-0.190/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
           --enable-deterministic-archives \
           --enable-thread-safety \
           --enable-dependency-tracking \
@@ -32,8 +33,8 @@ if [ ! -f "install-${stage}.stamp" ]; then
           --enable-valgrind \
           --enable-valgrind-annotations \
           --enable-install-elfh \
-          --enable-libdebuginfod \
-          --enable-debuginfod \
+          --disable-libdebuginfod \
+          --disable-debuginfod \
           --with-valgrind \
           --with-zlib \
           --with-bzlib \

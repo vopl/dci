@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh libmicrohttpd https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.75.tar.gz 9278907a6f571b391aab9644fd646a5108ed97311ec66f6359cebbedb0a4e3bb
+${CDIR}/prepareBuild.sh libmicrohttpd https://mirror.kumi.systems/gnu/libmicrohttpd/libmicrohttpd-0.9.77.tar.gz 9e7023a151120060d2806a6ea4c13ca9933ece4eacfc5c9464d20edddb76b0a0
 cd ${WDIR}/libmicrohttpd
 
 if [ ! -f "install.stamp" ]; then
@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../libmicrohttpd-0.9.75/configure --prefix=${PREFIX} --libdir=${LIBDIR}
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../libmicrohttpd-0.9.77/configure --prefix=${PREFIX} --libdir=${LIBDIR}
     make -j`nproc`
     make install
 

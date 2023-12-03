@@ -4,16 +4,16 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh git https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.37.0.tar.xz 9f7fa1711bd00c4ec3dde2fe44407dc13f12e4772b5e3c72a58db4c07495411f
+${CDIR}/prepareBuild.sh git https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.43.0.tar.xz 5446603e73d911781d259e565750dcd277a42836c8e392cac91cf137aa9b76ec
 cd ${WDIR}/git
 
 if [ ! -f "install.stamp" ]; then
 
-    pushd git-2.37.0
+    pushd git-2.43.0
 
     LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ./configure \
         --prefix=${PREFIX} --libdir=${LIBDIR} --with-curl=yes \
-exit
+
     make -j`nproc`
     make install
 

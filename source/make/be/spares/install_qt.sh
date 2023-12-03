@@ -4,7 +4,9 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh qt https://download.qt.io/official_releases/qt/6.3/6.3.1/single/qt-everywhere-src-6.3.1.tar.xz 51114e789485fdb6b35d112dfd7c7abb38326325ac51221b6341564a1c3cc726
+#${CDIR}/prepareBuild.sh qt https://qt-mirror.dannhauer.de/official_releases/qt/6.6/6.6.1/single/qt-everywhere-src-6.6.1.tar.xz dd3668f65645fe270bc615d748bd4dc048bd17b9dc297025106e6ecc419ab95d
+${CDIR}/prepareBuild.sh qt https://mirror.accum.se/mirror/qt.io/qtproject/official_releases/qt/6.6/6.6.1/single/qt-everywhere-src-6.6.1.tar.xz dd3668f65645fe270bc615d748bd4dc048bd17b9dc297025106e6ecc419ab95d
+
 cd ${WDIR}/qt
 
 if [ ! -f "install.stamp" ]; then
@@ -16,7 +18,7 @@ if [ ! -f "install.stamp" ]; then
     export CXXFLAGS=${LOCAL_CXXFLAGS}
     export LDFLAGS=${LOCAL_LDFLAGS}
 
-    ../qt-everywhere-src-6.3.1/configure \
+    ../qt-everywhere-src-6.6.1/configure \
         \
         -prefix         ${PREFIX} \
         -bindir         ${PREFIX}/bin \
@@ -51,6 +53,9 @@ if [ ! -f "install.stamp" ]; then
         -nomake manual-tests \
         -nomake minimal-static-tests \
         \
+        -skip qtwebengine \
+        -skip qtwebview \
+        \
         
         #-skip qt3d \
         #-skip qt5compat \
@@ -83,10 +88,8 @@ if [ ! -f "install.stamp" ]; then
         #-skip qtvirtualkeyboard \
         #-skip qtwayland \
         #-skip qtwebchannel \
-        #-skip qtwebengine \
         #-skip qtwebglplugin \
         #-skip qtwebsockets \
-        #-skip qtwebview \
         #-skip qtmultimedia \
         #-skip qtquick3d \
         #-skip qtwebengine \

@@ -9,11 +9,11 @@ if [[ "$stage" == "" ]]; then
 fi
 
 #################################
-${CDIR}/prepareBuild.sh gcc https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.xz e549cf9cf3594a00e27b6589d4322d70e0720cdd213f39beb4181e06926230ff
+${CDIR}/prepareBuild.sh gcc https://mirror.kumi.systems/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz e275e76442a6067341a27f04c5c6b83d8613144004c0413528863dc6b5c743da
 cd ${WDIR}/gcc
 
 if [ ! -f "prerequisites.stamp" ]; then
-    (cd gcc-12.2.0 && ./contrib/download_prerequisites)
+    (cd gcc-13.2.0 && ./contrib/download_prerequisites)
     touch prerequisites.stamp
 fi
 
@@ -28,14 +28,17 @@ if [ ! -f "install-${stage}.stamp" ]; then
         CFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CFLAGS}" \
         CXXFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CXXFLAGS}" \
         LDFLAGS_FOR_TARGET="${LOCAL_LDFLAGS}" \
-        ../gcc-12.2.0/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
+        ../gcc-13.2.0/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
             --disable-multilib --disable-multiarch \
             --enable-gold=yes --enable-ld=yes \
-            --enable-compressed-debug-sections=all \
+            --enable-gprofng=yes --enable-compressed-debug-sections=all --enable-default-compressed-debug-sections-algorithm=zstd \
+            --enable-year2038 \
+            --enable-lto --enable-vtable-verify \
             --disable-bootstrap \
             --enable-languages=c,c++,lto \
-            --enable-lto --enable-plugin \
-            --enable-shared --enable-threads --enable-tls --enable-__cxa_atexit
+            --enable-plugin \
+            --enable-shared \
+            --enable-threads --enable-tls --enable-__cxa_atexit
 
         make -j`nproc`
         make install

@@ -4,7 +4,7 @@ CDIR=`realpath ${BASH_SOURCE%/*}`
 source ${CDIR}/env.sh
 
 #################################
-${CDIR}/prepareBuild.sh libxml https://download.gnome.org/sources/libxml2/2.10/libxml2-2.10.1.tar.xz 21a9e13cc7c4717a6c36268d0924f92c3f67a1ece6b7ff9d588958a6db9fb9d8
+${CDIR}/prepareBuild.sh libxml https://download.gnome.org/sources/libxml2/2.12/libxml2-2.12.1.tar.xz 8982b9ccdf7f456e30d8f7012d50858c6623e495333b6191def455c7e95427eb
 cd ${WDIR}/libxml
 
 if [ ! -f "install.stamp" ]; then
@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../libxml2-2.10.1/configure --prefix=${PREFIX} --libdir=${LIBDIR} --without-python
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../libxml2-2.12.1/configure --prefix=${PREFIX} --libdir=${LIBDIR} --without-python
     make -j`nproc`
     make install
 

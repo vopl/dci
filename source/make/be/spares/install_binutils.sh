@@ -9,7 +9,7 @@ if [[ "$stage" == "" ]]; then
 fi
 
 #################################
-${CDIR}/prepareBuild.sh binutils https://ftp.gnu.org/gnu/binutils/binutils-2.39.tar.xz 645c25f563b8adc0a81dbd6a41cffbf4d37083a382e02d5d3df4f65c09516d00
+${CDIR}/prepareBuild.sh binutils https://mirror.kumi.systems/gnu/binutils/binutils-2.41.tar.xz ae9a5789e23459e59606e6714723f2d3ffc31c03174191ef0d015bdf06007450
 cd ${WDIR}/binutils
 
 if [ ! -f "install-${stage}.stamp" ]; then
@@ -22,13 +22,15 @@ if [ ! -f "install-${stage}.stamp" ]; then
         CFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CFLAGS}" \
         CXXFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CXXFLAGS}" \
         LDFLAGS_FOR_TARGET="${LOCAL_LDFLAGS}" \
-        ../binutils-2.39/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
+        ../binutils-2.41/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
             --disable-multilib --disable-multiarch \
             --enable-gold=yes --enable-ld=yes \
-            --enable-compressed-debug-sections=all \
+            --enable-gprofng=yes --enable-compressed-debug-sections=all --enable-default-compressed-debug-sections-algorithm=zstd \
+            --enable-year2038 --enable-pgo-build=lto \
+            --enable-lto --enable-vtable-verify \
             --disable-bootstrap \
             --enable-languages=c,c++,lto \
-            --enable-lto --enable-plugin \
+            --enable-plugin \
             --enable-shared
 
         make -j`nproc`
