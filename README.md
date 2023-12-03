@@ -1,4 +1,4 @@
-# Distributed Components Environment
+# Distributed Components Infrastructure
 
 Среда для построения распределенных программных систем
 
