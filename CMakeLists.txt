@@ -74,10 +74,17 @@ set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,
 ##########################################################################################
 file(GLOB units1 ${CMAKE_CURRENT_LIST_DIR}/source/core/*/CMakeLists.txt)
 file(GLOB units2 ${CMAKE_CURRENT_LIST_DIR}/source/module/*/CMakeLists.txt)
+if(DEFINED ENV{DCI_EXTARNAL_UNIT_DIRS})
+    set(units3)
+    foreach(td $ENV{DCI_EXTARNAL_UNIT_DIRS})
+        file(GLOB tu ${td}/*/CMakeLists.txt)
+        list(APPEND units3 ${tu})
+    endforeach()
+endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/source/core/integration/cmakeModules)
 include(dciIntegration)
 dciIntegration(
-    UNIT_SCRIPTS            ${units1} ${units2}
+    UNIT_SCRIPTS            ${units1} ${units2} ${units3}
 #    SRC_DIR                 ${CMAKE_CURRENT_SOURCE_DIR}
 
 #    OUT_DIR                 $ENV{DCI_OUT_DIR}
