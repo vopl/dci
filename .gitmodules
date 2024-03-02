@@ -64,6 +64,9 @@
 [submodule "module-net"]
 	path = source/module/net
 	url = ../dci-module-net
+[submodule "module-www"]
+	path = source/module/www
+	url = ../dci-module-www
 [submodule "module-ppn-connectivity-demand"]
 	path = source/module/ppn-connectivity-demand
 	url = ../dci-module-ppn-connectivity-demand
