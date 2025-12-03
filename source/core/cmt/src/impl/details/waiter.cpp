@@ -79,14 +79,14 @@ namespace dci::cmt::impl::details
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Waiter::readyOffer(WWLink* link)
+    template <bool positive> bool Waiter::readyOffer(WWLink* link)
     {
         dbgAssert(link >= _links && link < _links+_linksAmount);
         dbgAssert(this == link->_waiter);
 
         return _state.visit([&]<class State>(State& state)
         {
-            if(!ready(state, link))
+            if(!ready<positive>(state, link))
             {
                 return false;
             }
@@ -113,6 +113,10 @@ namespace dci::cmt::impl::details
             return true;
         });
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template bool Waiter::readyOffer<true>(WWLink* link);
+    template bool Waiter::readyOffer<false>(WWLink* link);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Waiter::waitableDead(WWLink* link)
@@ -222,14 +226,19 @@ namespace dci::cmt::impl::details
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Waiter::ready(StateNull& /*state*/, WWLink* /*offeredFrom*/)
+    template <bool positive> bool Waiter::ready(StateNull& /*state*/, WWLink* /*offeredFrom*/)
     {
         return false;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Waiter::ready(StateAll& /*state*/, WWLink* offeredFrom)
+    template <bool positive> bool Waiter::ready(StateAll& /*state*/, WWLink* offeredFrom)
     {
+        if(!positive)
+        {
+            return false;
+        }
+
         for(std::size_t linkIndex{}; linkIndex<_linksAmount; ++linkIndex)
         {
             WWLink& link = _links[linkIndex];
@@ -243,12 +252,12 @@ namespace dci::cmt::impl::details
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Waiter::ready(StateAny& state, WWLink* offeredFrom)
+    template <bool positive> bool Waiter::ready(StateAny& state, WWLink* offeredFrom)
     {
         for(std::size_t linkIndex{}; linkIndex<_linksAmount; ++linkIndex)
         {
             WWLink& link = _links[linkIndex];
-            if(&link == offeredFrom || !link._waitable || link._waitable->canAcquire())
+            if((positive && &link == offeredFrom) || !link._waitable || link._waitable->canAcquire())
             {
                 *state._acquiredIndex = linkIndex;
                 return true;
@@ -259,12 +268,12 @@ namespace dci::cmt::impl::details
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Waiter::ready(StateExpr& state, WWLink* offeredFrom)
+    template <bool positive> bool Waiter::ready(StateExpr& state, WWLink* offeredFrom)
     {
         for(std::size_t linkIndex{}; linkIndex<_linksAmount; ++linkIndex)
         {
             WWLink& link = _links[linkIndex];
-            if(&link == offeredFrom || !link._waitable || link._waitable->canAcquire())
+            if((positive && &link == offeredFrom) || !link._waitable || link._waitable->canAcquire())
             {
                 state.setBit(linkIndex);
             }

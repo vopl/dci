@@ -163,6 +163,16 @@ namespace dci::cmt::impl
             }
             break;
         }
+
+        _links.each([this](WWLink* link)
+        {
+            if(canLock())
+            {
+                return false;
+            }
+            link->_waiter->readyOffer<false>(link);
+            return true;
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

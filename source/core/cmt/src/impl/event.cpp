@@ -37,6 +37,16 @@ namespace dci::cmt::impl
     void Event::reset()
     {
         _raised = false;
+
+        _links.each([this](WWLink* link)
+        {
+            if(canAcquire())
+            {
+                return false;
+            }
+            link->_waiter->readyOffer<false>(link);
+            return true;
+        });
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
