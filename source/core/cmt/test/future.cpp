@@ -116,31 +116,35 @@ TEST(cmt, future)
             Promise<int> p;
             Future<int> f = p.future();
 
-            Barrier b1(4);
-            Barrier b2(4);
+            Event e1;
+            Event e2;
 
+            int processed = 0;
             spawn() += [&]()
             {
                 f.wait();
-                b1.stride();
+                e1.wait();
                 EXPECT_EQ(f.value(), 42);
-                b2.stride();
+                e2.wait();
+                ++processed;
             };
 
             spawn() += [&]()
             {
                 f.value();
-                b1.stride();
+                e1.wait();
                 EXPECT_EQ(f.value(), 42);
-                b2.stride();
+                e2.wait();
+                ++processed;
             };
 
             spawn() += [&]()
             {
                 f.value();
-                b1.stride();
+                e1.wait();
                 EXPECT_EQ(f.value(), 42);
-                b2.stride();
+                e2.wait();
+                ++processed;
             };
 
             spawn() += [&]()
@@ -148,8 +152,13 @@ TEST(cmt, future)
                 p.resolveValue(42);
             };
 
-            b1.stride();
-            b2.stride();
+            e1.raise();
+            e2.raise();
+
+            while(processed < 3)
+            {
+                yield();
+            }
         }
 
         //резолв значения через аргументы

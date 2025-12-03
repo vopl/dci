@@ -176,7 +176,6 @@ dciHimplMakeLayouts(${UNAME}
         impl/pulser.hpp
         impl/mutex.hpp
         impl/semaphore.hpp
-        impl/barrier.hpp
 
 
     CLASSES
@@ -194,7 +193,6 @@ dciHimplMakeLayouts(${UNAME}
         dci::cmt::impl::Pulser
         dci::cmt::impl::Mutex
         dci::cmt::impl::Semaphore
-        dci::cmt::impl::Barrier
 )
 
 ############################################################

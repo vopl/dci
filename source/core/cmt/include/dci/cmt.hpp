@@ -13,7 +13,6 @@
 #include "cmt/event.hpp"
 #include "cmt/notifier.hpp"
 #include "cmt/pulser.hpp"
-#include "cmt/barrier.hpp"
 #include "cmt/mutex.hpp"
 #include "cmt/semaphore.hpp"
 
