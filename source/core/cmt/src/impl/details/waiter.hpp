@@ -29,7 +29,7 @@ namespace dci::cmt::impl::details
 
     public:
         ctx::Fiber* fiber();
-        bool readyOffer(WWLink* link);
+        template <bool positive=true> bool readyOffer(WWLink* link);
         void waitableDead(WWLink* link);
 
     private:
@@ -72,10 +72,10 @@ namespace dci::cmt::impl::details
     private:
         template <class State> void exec(auto&&... args);
 
-        bool ready(StateNull& state, WWLink* offeredFrom = {});
-        bool ready(StateAll& state, WWLink* offeredFrom = {});
-        bool ready(StateAny& state, WWLink* offeredFrom = {});
-        bool ready(StateExpr& state, WWLink* offeredFrom = {});
+        template <bool positive=true> bool ready(StateNull& state, WWLink* offeredFrom = {});
+        template <bool positive=true> bool ready(StateAll& state, WWLink* offeredFrom = {});
+        template <bool positive=true> bool ready(StateAny& state, WWLink* offeredFrom = {});
+        template <bool positive=true> bool ready(StateExpr& state, WWLink* offeredFrom = {});
 
         void commit(StateNull& state, WWLink* offeredFrom = {});
         void commit(StateAll& state, WWLink* offeredFrom = {});

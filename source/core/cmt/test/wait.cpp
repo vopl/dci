@@ -136,15 +136,77 @@ TEST(cmt, waitExpr)
             EXPECT_EQ(res2.value(), (std::bitset<2>{0b11}));
             EXPECT_FALSE(res3.resolved());
 
-            e0.reset();//TODO при сбросе сигнального состояния не триггерится попытка захвата выражения, поэтому приходиться квот так вот на изнанку. Надо фиксить схему оповещения, чтобы несигнальное состояние тоже проводило на исчислитель выражения...
-            e2.reset();
             e0.raise();
+            e2.reset();
 
             EXPECT_TRUE(res3.waitValue());
             EXPECT_EQ(res3.value(), (std::bitset<3>{0b011}));
 
             done = true;
         }
+    };
+
+    executeReadyFibers();
+    EXPECT_TRUE(done);
+}
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+TEST(cmt, waitExprNegative)
+{
+    bool done{};
+    spawn() += [&]
+    {
+        Event e;
+        e.raise();
+
+        auto res = spawnv() += [&]{
+            return wait(!e);
+        };
+
+        yield();
+
+        EXPECT_FALSE(res.resolved());
+
+        e.reset();
+
+        EXPECT_TRUE(res.waitValue());
+        EXPECT_EQ(res.value(), (std::bitset<1>{0b0}));
+
+        done = true;
+    };
+
+    executeReadyFibers();
+    EXPECT_TRUE(done);
+}
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+TEST(cmt, waitExprNegative2)
+{
+    bool done{};
+    spawn() += [&]
+    {
+        Event e1, e2;
+        e1.raise();
+        e2.raise();
+
+        auto res = spawnv() += [&]{
+            return wait(!e1 && !e2);
+        };
+
+        yield();
+
+        EXPECT_FALSE(res.resolved());
+
+        e1.reset();
+
+        EXPECT_FALSE(res.resolved());
+
+        e2.reset();
+
+        EXPECT_TRUE(res.waitValue());
+        EXPECT_EQ(res.value(), (std::bitset<2>{0b00}));
+
+        done = true;
     };
 
     executeReadyFibers();
