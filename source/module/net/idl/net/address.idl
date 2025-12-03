@@ -1,0 +1,18 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope net
+{
+    /////////////////////////////////////////////////////////
+    struct Ip4Address
+    {
+        array<uint8, 4> octets;
+    }
+
+    struct Ip6Address
+    {
+        array<uint8, 16> octets;
+        uint32 linkId;
+    }
+
+    alias IpAddress = variant<Ip4Address, Ip6Address>;
+}

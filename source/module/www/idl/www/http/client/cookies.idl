@@ -1,0 +1,96 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "../error.idl"
+
+scope www::http::client
+{
+    scope cookies
+    {
+        exception Error : http::Error {}
+
+        enum SameSite
+        {
+            null,
+            lax,
+            strict,
+            none,
+        }
+
+        scope entry
+        {
+            struct Id
+            {
+                string      name;
+                bool        hostOnly;
+                string      domain;
+                string      path;
+            }
+        }
+
+        struct Entry
+        {
+            entry::Id   id;
+
+            string      value;
+
+            bool        persistent;
+            bool        secure;
+            bool        httpOnly;
+            bool        partitioned;
+            SameSite    sameSite;
+
+            uint64      creationTime;
+            uint64      lastAccessTime;
+            uint64      expiryTime;
+        }
+
+        scope store
+        {
+            interface Notifies
+            {
+                out added(list<Entry>);
+                out changed(list<Entry>);
+                out deleted(list<Entry>);
+            }
+
+            scope deserialization
+            {
+                exception TooSmall      : Error {}
+                exception BadMagic      : Error {}
+                exception BadCheck      : Error {}
+                exception BadContent    : Error {}
+            }
+        }
+
+        interface Store
+        {
+            in set(list<Entry>);
+            in get(entry::Id) -> list<Entry>;
+            in del(entry::Id);
+            in expire(uint64 now, bool finalizeSession);
+            in serialize() -> bytes;
+            in deserialize(bytes) -> none;
+
+            in watchNotifies(store::Notifies::Opposite);
+        }
+
+        interface IoGate
+        {
+            in fromResponse(
+                string domain,
+                string path,
+                list<string>);
+
+            in toRequest(
+                string domain,
+                string path,
+                bool isSecure,
+                bool isHttp) -> list<string>;
+        }
+    }
+
+    interface Cookies
+        : cookies::Store
+        , cookies::IoGate
+    {}
+}

@@ -1,0 +1,97 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "ppn/node/link.idl"
+require "ppn/transport.idl"
+
+scope ppn::node
+{
+    scope feature
+    {
+
+        interface Session
+        {
+            in address() -> transport::Address;
+            in id() -> link::Id;
+            out idSpecified(link::Id);
+
+            out failed(exception);
+
+            out joined(link::Remote);
+            out closed();
+        }
+
+        interface CSession : Session
+        {
+            out connected();
+        }
+
+        interface Connectors
+        {
+            out connectorStarted(transport::Address);
+            out connectorStopped(transport::Address);
+
+            in connect(link::Id, transport::Address);
+            out newSession(link::Id, transport::Address, CSession);
+        }
+
+        interface ASession : Session
+        {
+        }
+
+        interface Acceptors
+        {
+            out acceptorStarted(transport::Address, transport::Address);
+            out acceptorStopped(transport::Address, transport::Address);
+            out acceptorFailed(transport::Address, transport::Address, exception);
+
+            out newSession(ASession);
+        }
+
+        interface RemoteAddressSpace
+        {
+            in fireDiscovered(link::Id, transport::Address);
+            out discovered(link::Id, transport::Address);
+        }
+
+        interface LocalAddressSpace
+        {
+            in getDeclared() -> set<transport::Address>;
+
+            in declare(transport::Address);
+            out declared(transport::Address);
+
+            in undeclare(transport::Address);
+            out undeclared(transport::Address);
+        }
+
+        interface AgentProvider
+        {
+            in getAgent(ilid) -> interface;
+        }
+
+        interface AgentRegistry : AgentProvider
+        {
+            in registerAgentProvider(ilid, AgentProvider);
+        }
+
+        interface Service
+            : Connectors
+            , Acceptors
+            , RemoteAddressSpace
+            , LocalAddressSpace
+            , AgentRegistry
+        {
+            out start();
+            in started() -> bool;
+            out stop();
+            out failed(exception);
+
+            in join(link::Id, transport::Address) -> link::Remote;
+        }
+    }
+
+    interface Feature
+    {
+        in setup(feature::Service);
+    }
+}

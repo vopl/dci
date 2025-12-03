@@ -1,0 +1,122 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope h3
+{
+    interface Object
+    {
+
+        /////////////////////////////////////////////////////
+        in rn();
+        in rv() -> none;
+        in rb() -> bool;
+        in ri8() -> int8;
+        in ri16() -> int16;
+        in ri32() -> int32;
+        in ri64() -> int64;
+        in rui8() -> uint8;
+        in rui16() -> uint16;
+        in rui32() -> uint32;
+        in rui64() -> uint64;
+        in rr32() -> real32;
+        in rr64() -> real64;
+        in rs() -> string;
+        in rbt() -> bytes;
+        in riid() -> iid;
+
+        in rarray() -> array<string, 2>;
+        in rset() -> set<string>;
+        in rmap() -> map<string, bytes>;
+        in rlist() -> list<string>;
+        in rptr() -> ptr<string>;
+        in ropt() -> opt<string>;
+        in rtuple() -> tuple<bool, int8, string>;
+
+        in rinterface() -> interface;
+        in rx() -> Object;
+
+
+        /////////////////////////////////////////////////////
+        in ab(bool);
+        in ai8(int8);
+        in ai16(int16);
+        in ai32(int32);
+        in ai64(int64);
+        in aui8(uint8);
+        in aui16(uint16);
+        in aui32(uint32);
+        in aui64(uint64);
+        in ar32(real32);
+        in ar64(real64);
+        in as(string);
+        in abt(bytes);
+        in aiid(iid);
+
+        in aarray(array<string, 2>);
+        in aset(set<string>);
+        in amap(map<string, bytes>);
+        in alist(list<string>);
+        in aptr(ptr<string>);
+        in aopt(opt<string>);
+        in atuple(tuple<bool, int8, string>);
+
+        in ainterface(interface);
+        in ax(Object);
+
+
+        /////////////////////////////////////////////////////
+        in multiarg(
+                bool,
+                int8,
+                int16,
+                int32,
+                int64,
+                uint8,
+                uint16,
+                uint32,
+                uint64,
+                real32,
+                real64,
+                string,
+                bytes,
+                iid,
+                array<string, 2>,
+                set<string>,
+                map<string, bytes>,
+                list<string>,
+                ptr<string>,
+                opt<string>,
+                tuple<bool, int8, string>,
+
+                interface,
+                Object);
+
+
+        in enable(bool v);
+        in enabled() -> bool;
+        out enableChanged(bool v);
+    }
+
+    interface Rectangle : Object
+    {
+        in width() -> uint32;
+        in height() -> uint32;
+    }
+
+    interface Clickable : Object
+    {
+        out click();
+    }
+
+    interface Button : Clickable, Rectangle
+    {
+        in setText(string t);
+        in getText() -> string;
+        out textChanged(string t);
+    }
+
+    interface Checkbox : Button
+    {
+        in check(bool v);
+        out checkChanged(bool v);
+    }
+}

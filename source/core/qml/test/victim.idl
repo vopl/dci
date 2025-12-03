@@ -1,0 +1,33 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope a::b::c
+{
+    struct S1
+    {
+        uint32 field1;
+        string field2;
+    }
+
+    struct S2 : S1
+    {
+        S1 field2;
+        array<uint8, 2> field3;
+    }
+
+    struct S3 : S2
+    {
+        S1 field4;
+        array<uint8, 2> field5;
+    }
+
+    interface I1
+    {
+        in m0(int32);
+        in m1(int32 param1, string param2) -> none;
+        in m2(array<int32, 2> param3, uint8, S1) -> string;
+
+        out s0(int32);
+        out s1(int32 param1, string param2) -> none;
+        out s2(array<int32, 2> param3, uint8, S1) -> string;
+    }
+}

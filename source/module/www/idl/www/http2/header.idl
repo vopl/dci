@@ -1,0 +1,29 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "../http/header.idl"
+
+scope www::http2
+{
+    scope header
+    {
+        enum KeyRecognized
+        {
+            null,
+            method,
+            scheme,
+            authority,
+            path,
+            status,
+        }
+        alias KeyAny = string;
+        alias Key = variant<KeyRecognized, http::header::KeyRecognized, KeyAny>;
+
+        alias Value = string;
+    }
+
+    struct Header
+    {
+        header::Key   key;
+        header::Value value;
+    }
+}

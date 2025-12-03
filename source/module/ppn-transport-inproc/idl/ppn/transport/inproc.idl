@@ -1,0 +1,19 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "ppn/transport.idl"
+
+scope ppn::transport::inproc
+{
+    interface Connector : connector::Downstream {}
+
+    interface Acceptor  : acceptor::Downstream
+    {
+        in bind(Address) -> none;
+    }
+
+    exception BadAddress            : Error{}
+    exception ConnectionLost        : channel::Error{}
+    exception ConnectionRefused     : connector::Error{}
+    exception AlreadyBound          : acceptor::Error{}
+    exception AddressAlreadyInUse   : acceptor::Error{}
+}

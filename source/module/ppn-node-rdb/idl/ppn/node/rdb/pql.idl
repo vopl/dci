@@ -1,0 +1,192 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope ppn::node::rdb::pql
+{
+    struct id128
+    {
+        array<uint8, 16> data;
+    }
+
+    struct id256
+    {
+        array<uint8, 32> data;
+    }
+
+    struct id512
+    {
+        array<uint8, 64> data;
+    }
+
+    struct Null {}
+
+    struct Value
+    {
+        variant<
+            Null,
+
+            bool,
+
+            uint8,
+            uint16,
+            uint32,
+            uint64,
+
+            int8,
+            int16,
+            int32,
+            int64,
+
+            real32,
+            real64,
+
+            string,
+
+            id128,
+            id256,
+            id512,
+
+            list<Value>,
+            set<Value>,
+            map<Value, Value>
+        > data;
+    }
+
+    //функции
+    enum fun
+    {
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //общие
+        cmn_eqType,//одинаковый тип значений, не сами значения
+        cmn_eq,//строгое соответствие, сначала по типу, если равен - то по значению
+        cmn_ne,
+        cmn_gt,
+        cmn_lt,
+        cmn_ge,
+        cmn_le,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //числовые
+
+        num_eq,// eq(n1, n2), eq(n1, n2, epsilon)
+        num_ne,
+        num_gt,
+        num_lt,
+        num_ge,
+        num_le,
+
+        num_between,// between(v, min, max) -> bool, return min <= v && v <= max;
+
+        num_neg,
+        num_add,
+        num_sub,
+        num_div,
+        num_mul,
+        num_mod,
+
+        num_ceil,
+        num_floor,
+        num_trunc,
+        num_round,
+        num_abs,
+
+        num_log,
+        num_log10,
+        num_log2,
+        num_exp,
+        num_exp10,
+        num_exp2,
+        num_pow,
+
+        num_sqrt,
+        num_cbrt,
+
+        num_hypot,// sqrt(x^2 + y^2), cbrt(x^2 + y^2 + z^2)
+
+        //тригонометрия
+        num_sin,
+        num_cos,
+        num_tan,
+
+        num_asin,
+        num_acos,
+        num_atan,
+        num_atan2,
+
+        numseq_max,
+        numseq_min,
+        numseq_avg,
+        numseq_median,
+        numseq_sum,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //булевы
+        bool_not,
+        bool_and,
+        bool_or,
+        bool_xor,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //битовые (для целых чисел, для идентификаторов)
+        bits_neg,
+        bits_and,
+        bits_or,
+        bits_xor,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //строковые
+        str_concat,
+        str_find,
+        str_match,//regexp
+        str_startsWith,
+        str_endsWith,
+        str_substr,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //для идентификаторов
+        id_tip8,
+        id_tip16,
+        id_tip32,
+        id_tip64,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //для последовательностей (list, set)
+        seq_map,
+        seq_grep,
+        seq_reduce,
+        seq_at,//element by index
+        seq_size,
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //TODO: map
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //TODO: set
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        //хэши надо?
+        //crc
+        //sha
+    }
+
+    struct Column
+    {
+        ilid        provider;// most derived driver interface id
+        string      name;
+    }
+
+    struct Node
+    {
+        fun op;
+        list<
+            variant<Node, Value, Column>
+            > args;
+    }
+
+    alias Expression = variant<Node, Value, Column>;
+
+    interface ExpressionEvaluator4Tests
+    {
+        in evaluate(Expression) -> Value;
+    }
+}

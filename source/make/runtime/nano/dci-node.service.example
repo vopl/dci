@@ -1,0 +1,15 @@
+[Unit]
+Description=Dci node service
+
+[Service]
+User=dci
+Group=dci
+WorkingDirectory=/home/dci/node
+ExecStart=/bin/bash -ec 'bin/dci-host --aup @../etc/aup.conf --run ppn-node @../etc/ppn-node.conf >> log/host 2>&1'
+
+RemainAfterExit=no
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,42 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+#pragma once
+
+#include "../contract/wiresBundle.hpp"
+#include "../contract/hmDescriptorBase.hpp"
+#include "../contract/hmDescriptor.hpp"
+#include "../contract/mdState.hpp"
+#include <dci/utils/dbg.hpp>
+
+namespace dci::idl::interface
+{
+    template <template<Side> class, Side>
+    class StateHolder
+    {
+        template <template <Side> class, Side>
+        friend struct Methods;
+
+        template <template <Side> class, Side>
+        friend class ImplBase;
+
+        template <bool>
+        friend class Generic;
+
+    private:
+        template <template <Side> class B>
+        contract::WiresBundle<B>& getWiresBundle() const;
+
+    private:
+        const contract::HmDescriptorBase*   _hmcDescriptor;// без инициализации
+        contract::MdState*                  _mdcState;// без инициализации
+    };
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <template <Side> class C, Side s>
+    template <template <Side> class B>
+    contract::WiresBundle<B>& StateHolder<C, s>::getWiresBundle() const
+    {
+        dbgAssertX(_mdcState && _hmcDescriptor, "use uninitialized interface instance");
+        return _mdcState->getWiresBundle<contract::WiresBundle<B>>(_hmcDescriptor->hmbd(contract::HmDescriptor<C, B>::_index)._bundleOffset);
+    }
+}

@@ -1,0 +1,36 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope h1
+{
+    interface Iface1
+    {
+    }
+
+    interface Iface2
+    {
+    }
+}
+
+
+scope h2
+{
+    interface Object
+    {
+    }
+
+    interface Rectangle : Object
+    {
+    }
+
+    interface Clickable : Object
+    {
+    }
+
+    interface Button : Clickable, Rectangle
+    {
+    }
+
+    interface Checkbox : Button
+    {
+    }
+}

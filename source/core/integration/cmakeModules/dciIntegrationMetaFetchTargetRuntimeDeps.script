@@ -1,0 +1,14 @@
+if(WIN32)
+    set(ENV{PATH} "${libdir};$ENV{PATH}")
+endif()
+
+include(GetPrerequisites)
+get_prerequisites("${f}" deps 0 1 "" "")
+
+set(adeps)
+foreach(dep ${deps})
+    get_filename_component(adep ${dep} ABSOLUTE)
+    list(APPEND adeps ${adep})
+endforeach()
+
+execute_process(COMMAND echo "UNIT[${u}] TARGET[${t}] TARGET_DEPS[${adeps}] ")

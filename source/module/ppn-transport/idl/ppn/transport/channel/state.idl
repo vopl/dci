@@ -1,0 +1,22 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "../address.idl"
+require "../error.idl"
+
+scope ppn::transport::channel
+{
+    interface State
+    {
+        in  localAddress            () -> Address;
+        in  remoteAddress           () -> Address;
+
+        in  originalRemoteAddress   () -> Address;
+
+        out failed                  (exception);
+
+        in  close                   ();
+        out closed                  ();
+    }
+
+    exception Error : transport::Error{}
+}

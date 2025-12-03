@@ -1,0 +1,36 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "configurable.idl"
+require "ppn/node/feature.idl"
+require "ppn/node/link/id.idl"
+
+scope ppn::connectivity
+{
+    scope demand
+    {
+        exception Error {}
+
+        interface NeedHolder
+        {
+            in reweight(real64);
+        }
+
+        interface SatisfactionHolder
+        {
+            in fail();
+        }
+
+        interface Registry
+        {
+            in need(node::link::Id, real64 weight) -> NeedHolder;
+            out satisfy(node::link::Id, SatisfactionHolder);
+        }
+    }
+
+    interface Demand
+        : node::Feature
+        , node::feature::AgentProvider
+        , Configurable
+    {
+    }
+}

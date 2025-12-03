@@ -1,0 +1,15 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "ppn/node/feature.idl"
+require "ppn/node/link/feature.idl"
+require "ppn/node/rdb/feature.idl"
+
+scope ppn::connectivity
+{
+    interface Joining
+        : node::Feature
+        , node::link::Feature
+        , node::rdb::Feature
+    {
+    }
+}

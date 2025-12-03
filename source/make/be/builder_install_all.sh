@@ -1,0 +1,86 @@
+#!/bin/bash
+
+set -e
+
+if [ "builder" != `whoami` ]; then
+    echo "try this: sudo -u builder $0"
+    exit 1
+fi
+
+#-------------------------------------------------------------------
+CDIR=`realpath ${BASH_SOURCE%/*}`
+
+${CDIR}/spares/install_zstd.sh 1
+${CDIR}/spares/install_zlib.sh 1
+${CDIR}/spares/install_gcc.sh 1
+${CDIR}/spares/install_binutils.sh 1
+
+${CDIR}/spares/install_zstd.sh 2
+${CDIR}/spares/install_zlib.sh 2
+${CDIR}/spares/install_gcc.sh 2
+${CDIR}/spares/install_binutils.sh 2
+
+${CDIR}/spares/install_pkg-config.sh
+${CDIR}/spares/install_readline.sh
+
+${CDIR}/spares/install_chrpath.sh
+${CDIR}/spares/install_gmp.sh
+${CDIR}/spares/install_mpfr.sh
+${CDIR}/spares/install_libmpdec.sh
+${CDIR}/spares/install_valgrind.sh
+
+${CDIR}/spares/install_bzip2.sh
+${CDIR}/spares/install_libarchive.sh
+${CDIR}/spares/install_icu.sh
+${CDIR}/spares/install_libxml.sh
+${CDIR}/spares/install_libexpat.sh
+${CDIR}/spares/install_libffi.sh
+${CDIR}/spares/install_pcre.sh
+${CDIR}/spares/install_libmicrohttpd.sh
+${CDIR}/spares/install_openssl_3.sh
+${CDIR}/spares/install_libpsl.sh
+${CDIR}/spares/install_curl.sh
+${CDIR}/spares/install_sqlite.sh
+${CDIR}/spares/install_elfutils.sh
+${CDIR}/spares/install_openssh.sh
+${CDIR}/spares/install_git.sh
+
+${CDIR}/spares/install_python.sh
+${CDIR}/spares/pythonSetup.sh
+
+${CDIR}/spares/install_gdb.sh
+${CDIR}/spares/install_boost.sh
+
+${CDIR}/spares/install_cmake.sh
+${CDIR}/spares/install_pugixml.sh
+${CDIR}/spares/install_gtest.sh
+${CDIR}/spares/install_brotli.sh
+${CDIR}/spares/install_ninja.sh
+
+#${CDIR}/spares/install_qt.sh
+#${CDIR}/spares/install_opensans.sh
+
+#-------------------------------------------------------------------
+# gnome/python related
+${CDIR}/spares/install_libgpg-error.sh
+${CDIR}/spares/install_libgcrypt.sh
+${CDIR}/spares/install_glib.sh 1
+${CDIR}/spares/install_gobject-introspection.sh
+${CDIR}/spares/install_graphviz.sh
+${CDIR}/spares/install_glib.sh 2
+${CDIR}/spares/install_libxslt.sh
+${CDIR}/spares/install_gir.sh
+${CDIR}/spares/install_vala.sh
+${CDIR}/spares/install_libsecret.sh
+
+#-------------------------------------------------------------------
+${CDIR}/spares/separateDebug.sh
+${CDIR}/spares/fixRpath.sh
+
+
+#-------------------------------------------------------------------
+#${CDIR}/spares/install_bb_master.sh
+#${CDIR}/spares/install_bb_worker.sh
+
+#-------------------------------------------------------------------
+echo 'all done'

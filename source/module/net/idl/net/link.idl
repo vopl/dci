@@ -1,0 +1,60 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "address.idl"
+
+scope net
+{
+    scope link
+    {
+        /////////////////////////////////////////////////////////
+        struct Ip4Address
+        {
+            uint8           prefixLength;
+            net::Ip4Address netmask;
+            net::Ip4Address address;
+            net::Ip4Address broadcast;
+        }
+
+        enum Ip6AddressScope
+        {
+            null,
+            host,
+            link,
+            site,
+            global,
+        }
+
+        struct Ip6Address
+        {
+            uint8           prefixLength;
+            net::Ip6Address address;
+            Ip6AddressScope scope;
+        }
+
+        alias Address = variant<Ip4Address, Ip6Address>;
+
+        flags Flags
+        {
+            up          = 0x1,
+            running     = 0x2,
+            broadcast   = 0x4,
+            loopback    = 0x8,
+            p2p         = 0x10,
+            multicast   = 0x20,
+        }
+    }
+
+    /////////////////////////////////////////////////////////
+    interface Link
+    {
+        in  id          () -> uint32;
+        in  name        () -> string;
+        in  flags       () -> link::Flags;
+        in  mtu         () -> uint32;
+        in  hwAddr      () -> list<uint8>;
+        in  addr        () -> list<link::Address>;
+
+        out changed     ();
+        out removed     ();
+    }
+}

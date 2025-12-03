@@ -1,0 +1,34 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "address.idl"
+
+scope net
+{
+    struct Ip4Endpoint
+    {
+        Ip4Address  address;
+        uint16      port;
+    }
+
+    struct Ip6Endpoint
+    {
+        Ip6Address  address;
+        uint16      port;
+    }
+
+    alias IpEndpoint = variant<Ip4Endpoint, Ip6Endpoint>;
+
+    struct LocalEndpoint
+    {
+        string      address;
+    }
+
+    struct NullEndpoint {}
+
+    alias Endpoint = variant<
+        NullEndpoint,
+        Ip4Endpoint,
+        Ip6Endpoint,
+        LocalEndpoint
+    >;
+}

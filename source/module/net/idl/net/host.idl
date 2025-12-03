@@ -1,0 +1,36 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "link.idl"
+require "endpoint.idl"
+require "route.idl"
+require "stream.idl"
+require "datagram.idl"
+
+scope net
+{
+    /////////////////////////////////////////////////////////
+    interface Host
+    {
+        in  links           ()                  -> map<uint32, Link>;
+        out linkAdded       (uint32 id, Link v);
+
+        in  route4          ()                  -> list<route::Entry4>;
+        out route4Changed   ();
+
+        in  route6          ()                  -> list<route::Entry6>;
+        out route6Changed   ();
+
+        in  resolveIp       (string endpoint)   -> IpEndpoint;
+        in  resolveIp4      (string endpoint)   -> Ip4Endpoint;
+        in  resolveIp6      (string endpoint)   -> Ip6Endpoint;
+
+        in  resolveAllIp    (string endpoint)   -> list<IpEndpoint>;
+        in  resolveAllIp4   (string endpoint)   -> list<Ip4Endpoint>;
+        in  resolveAllIp6   (string endpoint)   -> list<Ip6Endpoint>;
+
+        in  streamServer    ()                  -> stream::Server;
+        in  streamClient    ()                  -> stream::Client;
+
+        in  datagramChannel()                   -> datagram::Channel;
+    }
+}

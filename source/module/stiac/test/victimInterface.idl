@@ -1,0 +1,26 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope stiac::test
+{
+
+    interface AsArgument
+    {
+        in in_m();
+        out out_m();
+    }
+
+    interface Base
+    {
+        in  in_m1(uint32 arg1) -> uint64;
+    }
+
+    interface Victim : Base
+    {
+        in  in_withResult() -> none;
+        in  in_withResult2() -> uint32;
+
+        out out_m1(string arg1, bool arg2) -> string;
+
+        in  in_m2(AsArgument arg1);
+    }
+}

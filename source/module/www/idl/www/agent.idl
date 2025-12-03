@@ -1,0 +1,89 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "http/client/cookies.idl"
+require "http/header.idl"
+require "http/firstLine.idl"
+require "tls.idl"
+
+scope www
+{
+    scope agent
+    {
+        exception Error {}
+
+        exception Stopped           : Error {}
+
+        exception BadMethod         : Error {}
+        exception UnexpectedBody    : Error {}
+        exception BadUri            : Error {}
+        exception BadUriScheme      : Error {}
+        exception BadUriHost        : Error {}
+        exception BadUriPort        : Error {}
+
+        exception HostFailed        : Error {}
+        exception ResolveFailed     : Error {}
+        exception ConnectFailed     : Error {}
+        exception NetChannelFailed  : Error {}
+        exception SecureFailed      : Error {}
+        exception TlsChannelFailed  : Error {}
+        exception HttpFailed        : Error {}
+        exception HttpClosed        : Error {}
+        exception CookieFailed      : Error {}
+
+        scope log
+        {
+            interface Stream
+            {
+                out content(string);
+                out done();
+            }
+
+            interface Source
+            {
+                out stream(Stream, string name);
+            }
+        }
+
+        scope io
+        {
+            struct Request
+            {
+                string                          uri;
+                www::http::firstLine::Method    method;
+                list<www::http::Header>         headers;
+                bytes                           body;
+            }
+
+            struct Response
+            {
+                www::http::firstLine::Version       version;
+                www::http::firstLine::StatusCode    statusCode;
+                string                              statusText;
+                list<www::http::Header>             headers;
+                bytes                               data;
+            }
+        }
+    }
+
+    interface Agent
+    {
+        in enableLog() -> agent::log::Source;
+        in disableLog();
+
+        in tlsSetupTrust() -> tls::setup::Trust;
+
+        in enableCookies() -> www::http::client::cookies::Store;
+        in enableCookiesInside();
+        in disableCookies();
+
+        in setConncurrency(
+            uint32 maxConnectionsPerSite,
+            uint32 idleConnectionTimeoutMs,
+            uint32 maxIoPerformingPerConection,
+            uint32 maxIoPerformingPerSite);
+
+        in io(agent::io::Request) -> agent::io::Response;
+        in get(string uri, list<www::http::Header> extraHeaders) -> agent::io::Response;
+        in post(string uri, list<www::http::Header> extraHeaders, bytes data) -> agent::io::Response;
+    }
+}

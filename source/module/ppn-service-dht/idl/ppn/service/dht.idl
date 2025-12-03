@@ -1,0 +1,92 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "ppn/node/feature.idl"
+require "ppn/node/link/feature.idl"
+
+/*
+    на начальной стадии реализация будет крайне примитивной - минимальный насколько только можно функционал
+
+    в дальнейшем, когда появятся проблемы с
+        - нагрузкой из за массивного/популярного контента или
+        - утерей индекса из за мутабельности состава узлов сети
+
+    предполагается усиление данной примитивной реализации за счет
+        - расширение "хранящей ноды" до "хранящего кластера" по салютному принципу
+        - партицирование нагрузки по кластеру
+        - репликация нагрузки по кластеру, включая учет мутабельности состава узлов в кластере
+        - управление уровнем дублирования нагрузки по кластеру для противодействия утере данных в связи с мутабельностью состава узлов
+*/
+
+scope ppn::service::dht
+{
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    exception Error {}
+    exception NotReady : Error {}
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    struct Key
+    {
+        array<uint8, 32> value;
+    }
+
+    scope value
+    {
+        scope payload
+        {
+            struct Nonce {bytes value;}
+            struct Raw {bytes value;}
+            struct ServiceId {iid value;}
+            struct FileId {bytes value;}
+            struct TargetAddress {transport::Address value;}
+            struct TargetId {node::link::Id value;}
+            struct TargetSignature {array<uint8, 64> value;}// для сериализованного ключа и всего значения
+        }
+
+        alias Data = variant<
+            payload::Nonce,
+            payload::Raw,
+            payload::ServiceId,
+            payload::FileId,
+            payload::TargetId,
+            payload::TargetSignature,
+            payload::TargetAddress
+        >;
+    }
+
+    struct Value
+    {
+        list<value::Data> data;// размер ограничен 1Кб
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    // процесс поиска, может совершать прогресс, окончиться успехом или неудачей
+    interface ProgressListner
+    {
+        in advance(uint64 distance);
+    }
+
+    // интерфейс для пользователя
+    interface Processor
+    {
+        in put(Key, Value, ProgressListner) -> none;
+        in get(Key, uint32 limit, ProgressListner) -> set<Value>;
+    }
+
+    scope internal
+    {
+        // участник поискового сообщества
+        interface Peer : Processor
+        {
+        }
+    }
+}
+
+scope ppn::service
+{
+    interface Dht
+        : node::Feature
+        , node::feature::AgentProvider
+        , node::link::Feature
+        , node::link::feature::Payload
+    {}
+}

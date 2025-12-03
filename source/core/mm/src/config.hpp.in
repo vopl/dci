@@ -1,0 +1,21 @@
+#pragma once
+
+#cmakedefine HAVE_VALGRIND 1
+
+#include <cstddef>
+
+namespace dci::mm::impl
+{
+    struct Config
+    {
+        static const std::size_t    _pageSize                   = @DCIMMCONFIG_pageSize@;
+        static const std::size_t    _cacheLineSize              = @DCIMMCONFIG_cachelineSize@;
+
+        static const std::size_t    _stackPages                 = @DCIMMCONFIG_stackPages@;
+        static const bool           _stackGrowsDown             = @DCIMMCONFIG_stackGrowsDown@;
+        static const bool           _stackHasGuard              = @DCIMMCONFIG_stackHasGuard@;
+        static const std::size_t    _stackKeepProtectedBytes    = @DCIMMCONFIG_stackKeepProtectedBytes@;
+
+        static const std::size_t    _stacksAmount               = @DCIMMCONFIG_stacksAmount@;
+    };
+}

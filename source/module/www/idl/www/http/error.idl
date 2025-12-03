@@ -1,0 +1,42 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope www::http
+{
+    exception Error {}
+    scope error
+    {
+        exception Request : Error {}
+        scope request
+        {
+            exception InternalError         : Request {}
+            exception BadRequest            : Request {}
+            exception BadMethod             : Request {}
+            exception BadVersion            : Request {}
+            exception TooBigUri             : Request {}
+            exception TooBigHeaders         : Request {}
+            exception AmbiguousHeaders      : Request {}
+            exception TooBigContent         : Request {}
+            exception UnprocessableContent  : Request {}
+            exception CompressionFailed     : Request {}
+        }
+
+        exception Response : Error {}
+        scope response
+        {
+            exception InternalError         : Response {}
+            exception BadResponse           : Response {}
+            exception BadVersion            : Response {}
+            exception BadStatus             : Response {}
+            exception TooBigHeaders         : Response {}
+            exception AmbiguousHeaders      : Response {}
+            exception TooBigContent         : Response {}
+            exception UnprocessableContent  : Response {}
+            exception CompressionFailed     : Response {}
+        }
+
+        exception InternalError     : Error {}
+        exception CompressionFailed : Error {}
+        exception DownstreamFailed  : Error {}
+        exception BadInput          : Error {}
+    }
+}

@@ -1,0 +1,36 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "www/stream/channel.idl"
+
+require "www/tls.idl"
+
+require "www/http/client/channel.idl"
+require "www/http/client/cookies.idl"
+require "www/http/server/channel.idl"
+require "www/http/error.idl"
+
+require "www/http2/client/channel.idl"
+require "www/http2/server/channel.idl"
+
+require "www/ws/channel.idl"
+
+require "www/agent.idl"
+
+scope www
+{
+    interface Factory
+    {
+        in tls() -> Tls;
+
+        in stream2HttpClient(stream::Channel) -> http::client::Channel;
+        in httpClientCookies() -> http::client::Cookies;
+        in stream2HttpServer(stream::Channel) -> http::server::Channel;
+
+        in stream2Http2Client(stream::Channel) -> http2::client::Channel;
+        in stream2Http2Server(stream::Channel) -> http2::server::Channel;
+
+        in stream2Ws(stream::Channel) -> ws::Channel;
+
+        in agent() -> Agent;
+    }
+}

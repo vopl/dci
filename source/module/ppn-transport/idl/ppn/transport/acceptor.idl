@@ -1,0 +1,43 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "error.idl"
+require "endpoint.idl"
+require "channel.idl"
+
+scope ppn::transport
+{
+    scope acceptor
+    {
+        interface Doer
+        {
+            out accepted(Channel);
+        }
+
+        interface Control
+        {
+            in start();
+            in stop();
+
+            out started(Address, Address);
+            out stopped(Address, Address);
+            out failed(Address, Address, exception);
+        }
+
+        interface Downstream
+            : Doer
+            , Control
+            , Endpoint
+        {
+        }
+
+        exception Error : transport::Error{}
+    }
+
+    interface Acceptor
+        : acceptor::Doer
+        , acceptor::Control
+    {
+        in add(acceptor::Downstream);
+        in del(acceptor::Downstream);
+    }
+}

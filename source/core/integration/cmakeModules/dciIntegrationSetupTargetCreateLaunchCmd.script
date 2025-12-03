@@ -1,0 +1,6 @@
+file(WRITE  ${targetDir}/${cmdFile} "@echo off\n")
+file(APPEND ${targetDir}/${cmdFile} "setlocal\n")
+file(APPEND ${targetDir}/${cmdFile} "set exeDir=%~dp0\n")
+file(APPEND ${targetDir}/${cmdFile} "set PATH=%exeDir%/${libDir};%PATH%\n")
+file(APPEND ${targetDir}/${cmdFile} "call %exeDir%/${targetFile} %*\n")
+file(APPEND ${targetDir}/${cmdFile} "exit /b %errorlevel%\n")

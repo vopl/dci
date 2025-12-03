@@ -1,0 +1,107 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "remoteEdge.idl"
+require "localEdge.idl"
+
+scope stiac
+{
+    scope protocol
+    {
+        enum State
+        {
+            null        = 0x00,
+            work        = 0x01,
+            pause       = 0x03,
+            fail        = 0x13,
+        }
+
+        enum AutoPumping
+        {
+            none        = 0,  //надо вручную дергать пампер
+            instantly   = 1,  //при любом входящем событии (по умолчанию используется этот режим)
+            delayed     = 2,  //входящие события будут буферизироваться некоторое время, затем оптом будут прокачаны пампером
+        }
+
+        flags Requirements
+        {
+            null                = 0x00,
+
+            //нарезка бинарного потока на отдельные сообщения  (если нет шифрования)
+            cutting             = 0x01,
+
+            //целостность (если нет шифрования)
+            integrity           = 0x03,
+
+            //шифрование (покрывает целостность и нарезку)
+            ciphering           = 0x13,
+
+            //объем данных
+            compression         = 0x20,
+        }
+
+        alias PublicKey = array<uint8, 32>;
+        alias PrivateKey = array<uint8, 32>;
+
+        exception Error {}
+        exception InternalError : Error {}
+        exception BadState : Error {}
+        exception BadRequirements : Error {}
+
+        exception BadRemoteMarker : Error {}
+
+        exception BadRemoteVersion : Error
+        {
+            uint8 version;
+        }
+
+        exception BadRemoteRequirements : Error
+        {
+            Requirements input;
+            Requirements inputOptional;
+            Requirements output;
+        }
+
+        exception MissingRemoteEdge : Error {}
+        exception MissingLocalEdge : Error {}
+        exception DecompressionFail : Error {}
+        exception HandshakeFail : Error {}
+        exception DecipheringFail : Error {}
+        exception IntegrityViolation : Error {}
+        exception LocalEdgeFail : Error {}
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    interface Protocol
+    {
+        //текущая версия протокола
+        in getVersion() -> uint32;
+
+        //установить конечные точки
+        in setRemoteEdge(RemoteEdge::Opposite remote);
+
+        //установить требования (наличие обфускатора например...)
+        in setRequirements(
+            protocol::Requirements input,
+            protocol::Requirements inputOptional,
+            protocol::Requirements output);
+
+        //установить заранее известные ключи если есть
+        in setAuthPrologue(bytes prologue);
+        in setAuthLocal(protocol::PrivateKey local);
+
+        in setLocalEdge(LocalEdge::Opposite local);
+
+        in setAutoPumping(protocol::AutoPumping);
+
+        in start();
+        in pump();
+
+        in state() -> protocol::State;
+        out stateChanged(protocol::State state);
+
+        in remoteAuth() -> protocol::PublicKey;
+        out remoteAuthChanged(protocol::PublicKey remote);
+
+        out failed(exception);
+    }
+}

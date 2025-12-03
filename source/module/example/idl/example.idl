@@ -1,0 +1,40 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope example
+{
+    //interface
+    interface i1
+    {
+        in i1m1();
+        in i1m2(int8 a1);
+        in i1m3(int8 a1) -> none;
+
+        out oi1m1();
+        out oi1m2(uint32 a1);
+        out oi1m3(string a1, bool a2) -> none;
+    }
+
+    interface i2
+        : i1::Opposite
+    {
+        out i1m1(none a1);
+    }
+
+    /*
+    scope s1
+    {
+        interface i31
+        {
+        }
+
+        interface i3
+            : i1
+            , i2
+            , i31
+        {
+            out i1m1(int8 a1);
+            out i1m4(int8 a1);
+        }
+    }
+    */
+}

@@ -1,0 +1,42 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "configurable.idl"
+require "ppn/node/link/feature.idl"
+require "ppn/node/rdb/feature.idl"
+require "ppn/node/feature.idl"
+
+scope ppn::topology
+{
+    interface Lis
+        : node::link::Feature
+        , node::link::feature::Payload
+        , node::rdb::Feature
+        , node::Feature
+        , Configurable
+    {
+    }
+
+    scope lis
+    {
+        exception Error {}
+
+        struct GridFillingStep
+        {
+            uint8 full;
+            uint8 empty;
+        }
+
+        interface Supplier
+        {
+            in subscribeNears();
+            in usubscribeNears();
+
+            in gridSetup(uint8 bits, uint16 size);
+            in gridRequest(list<GridFillingStep> filling);
+
+            out supply(
+                node::link::Id,
+                list<transport::Address>);
+        }
+    }
+}

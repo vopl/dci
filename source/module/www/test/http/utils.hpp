@@ -1,0 +1,141 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+#pragma once
+
+#include <dci/test.hpp>
+#include <dci/host.hpp>
+#include "www.hpp"
+
+using namespace dci;
+using namespace dci::host;
+using namespace dci::idl;
+using namespace dci::idl::gen;
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+namespace testing::internal
+{
+    template <>
+    inline void PrintTo<dci::Bytes>(const dci::Bytes& value, ::std::ostream* os)
+    {
+        *os << value.toString();
+    }
+}
+
+namespace http::utils
+{
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    inline
+    std::tuple<
+        www::stream::Channel<>,
+        www::stream::Channel<>
+    > interconnectWwwStream()
+    {
+
+        www::stream::Channel<> serverFront, clientFront;
+        www::stream::Channel<>::Opposite serverBack = serverFront.init2();
+        www::stream::Channel<>::Opposite clientBack = clientFront.init2();
+
+        struct Link
+        {
+            bool        _receiveStrarted{};
+            dci::Bytes  _receiveData{};
+            bool        _closed{};
+            idl::interface::Generic<false> _weakDst;
+            www::stream::Channel<>::Opposite dst()
+            {
+                return _weakDst;
+            }
+        };
+
+        auto interconnect = [](std::shared_ptr<Link> link, www::stream::Channel<>::Opposite src, www::stream::Channel<>::Opposite dst)
+        {
+            link->_weakDst = dst.weak();
+
+            // in  send                (bytes);
+            src->send() += [link](dci::Bytes&& data)
+            {
+                if(auto dst = link->dst())
+                {
+                    link->_receiveData.end().write(std::move(data));
+                    if(link->_receiveStrarted && !link->_receiveData.empty())
+                        dst->received(std::move(link->_receiveData));
+                }
+            };
+
+            // in  startReceive        ();
+            src->startReceive() += [link]()
+            {
+                if(auto dst = link->dst())
+                {
+                    link->_receiveStrarted = true;
+                    if(!link->_receiveData.empty())
+                        dst->received(std::move(link->_receiveData));
+                }
+            };
+
+            // in  stopReceive         ();
+            src->stopReceive() += [link]()
+            {
+                if(auto dst = link->dst())
+                {
+                    link->_receiveStrarted = false;
+                }
+            };
+
+            // out received            (bytes);
+            // in  shutdown            ();
+            src->shutdown() += [link]()
+            {
+                if(auto dst = link->dst())
+                {
+                    link->_receiveStrarted = false;
+                    if(!link->_closed)
+                    {
+                        link->_closed = true;
+                        dst->closed();
+                    }
+                }
+            };
+
+            // out failed(exception);
+            // out closed();
+            // in close();
+            src->close() += [link]()
+            {
+                if(auto dst = link->dst())
+                {
+                    link->_receiveStrarted = false;
+                    if(!link->_closed)
+                    {
+                        link->_closed = true;
+                        dst->closed();
+                    }
+                }
+            };
+        };
+
+        interconnect(std::make_shared<Link>(), serverBack, clientBack);
+        interconnect(std::make_shared<Link>(), clientBack, serverBack);
+
+        return {clientFront, serverFront};
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    inline
+    std::tuple<
+        www::http::client::Channel<>,
+        www::http::server::Channel<>
+    > interconnectWwwHttp()
+    {
+        Manager* manager = testManager();
+        www::Factory<> wwwFactory = *manager->createService<www::Factory<>>();
+
+        auto [client, server] = interconnectWwwStream();
+
+        return
+        {
+            *wwwFactory->stream2HttpClient(client),
+            *wwwFactory->stream2HttpServer(server)
+        };
+    }
+}

@@ -1,0 +1,21 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "address.idl"
+
+scope ppn::transport
+{
+    interface Endpoint
+    {
+        in address() -> Address;     //outbound
+        out addressChanged(Address);
+
+        in cost() -> real64;       //0-1
+        out costChanged(real64);
+
+        in rtt() -> real64;         //ping+pong time, seconds;
+        out rttChanged(real64);
+
+        in bandwidth() -> real64;   //bytes/sec
+        out bandwidthChanged(real64);
+    }
+}

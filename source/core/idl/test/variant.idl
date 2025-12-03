@@ -1,0 +1,12 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+alias v1 = variant
+<
+    uint32,
+    string
+>;
+
+interface i1
+{
+    in m1(v1);
+}

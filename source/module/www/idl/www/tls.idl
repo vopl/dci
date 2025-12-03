@@ -1,0 +1,66 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "stream/channel.idl"
+
+scope www
+{
+    scope tls
+    {
+        exception Error {}
+        scope error
+        {
+            exception SetAlpnProtosFailed   : Error {}
+            exception SetServernameFailed   : Error {}
+            exception SetTmpDhFailed        : Error {}
+            exception ReadCertFailed        : Error {}
+            exception UseCertFailed         : Error {}
+            exception ClearChainFailed      : Error {}
+            exception AddCertChainFailed    : Error {}
+            exception ReadKeyFailed         : Error {}
+            exception UseKeyFailed          : Error {}
+            exception CertStoreFailed       : Error {}
+            exception AddCAFailed           : Error {}
+            exception SetVerifyDepthFailed  : Error {}
+            exception PeerVerifyFailed      : Error {}
+            exception HandshakeFailed       : Error {}
+            exception DownstreamFailed      : Error {}
+            exception DownstreamClosed      : Error {}
+        }
+
+        interface Channel : stream::Channel
+        {
+            in alpnProtoSelected() -> string;
+        }
+
+        scope client { interface Channel : tls::Channel {} }
+        scope server { interface Channel : tls::Channel {} }
+
+        scope setup
+        {
+            interface Protocol
+            {
+                in setAlpnProtos(list<string>) -> none;
+            }
+
+            interface Trust
+            {
+                in setServername(string) -> none;
+
+                in setAuth(string certAndChain, string certPasswd, string key, string keyPasswd) -> none;
+                in setDefaultTrustedCAs() -> none;
+                in addTrustedCAs(list<string>) -> none;
+                in setVerify(bool enable, uint8 depth) -> none;
+
+                in setTmpDh(string) -> none;
+            }
+        }
+    }
+
+    interface Tls
+        : tls::setup::Protocol
+        , tls::setup::Trust
+    {
+        in client(stream::Channel, opt<string> servername) -> tls::client::Channel;
+        in server(stream::Channel) -> tls::server::Channel;
+    }
+}

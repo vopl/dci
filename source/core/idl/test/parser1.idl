@@ -1,0 +1,121 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope someScope1 {}
+
+scope someScope1 ~ abi {}
+
+
+//nested scope
+scope someScope1::someScope2::someScope3 {alias someInNested=uint8;}
+alias someInNested = someScope1::someScope2::someScope3::someInNested;
+
+//primitive
+scope primitives
+{
+    alias x1 = none;
+    alias x2 = bool;
+
+    alias x3 = int8;
+    alias x4 = int16;
+    alias x5 = int32;
+    alias x6 = int64;
+
+    alias x7 = uint8;
+    alias x8 = uint16;
+    alias x9 = uint32;
+    alias x10 = uint64;
+
+    alias x11 = real32;
+    alias x12 = real64;
+
+    alias x13 = string;
+    alias x14 = bytes;
+
+    alias x15 = interface;
+    alias x16 = iid;
+}
+
+//container
+scope containers
+{
+    alias x1 = array<bool,10>;
+    alias x2 = set<x1>;
+    alias x3 = map<x2, x2>;
+    alias x4 = list<x3>;
+    alias x5 = ptr<x4>;
+    alias x6 = tuple<x1,x2,x3,x4,x5>;
+}
+
+//enum
+enum e1
+{
+    v1 = 10,
+    v2 = 0x30,
+}
+
+//flags
+flags f1
+{
+    v1 = 0x01,
+    v2 = 0x30,
+    v3 = 0x40,
+}
+
+//struct
+struct s1
+{
+    int8 v1;
+}
+
+struct s2 : s1
+{
+    int32 v2;
+}
+
+//variant
+alias v1 = variant
+<
+    none,
+    string
+>;
+
+//interface
+interface i1
+{
+    in m1 ();
+    in m2 (uint32 a1);
+    in m3 (string a1) -> none;
+
+    out om1 ();
+    out om2 (uint32 a1);
+    out om3 (string a1) -> none;
+
+    out om4 (exception a1);
+    out om5 () -> exception;
+}
+
+interface i2
+    : i1::Opposite
+{
+    //struct i2s1{i1 x;}
+    //out m1: (i1);
+}
+
+interface i3
+    : i1
+{
+}
+
+
+
+
+//exception
+exception exc1 {}
+exception exc2 : exc1
+{
+    uint32 v1;
+}
+
+//include
+include "parser1_i1.idl"
+

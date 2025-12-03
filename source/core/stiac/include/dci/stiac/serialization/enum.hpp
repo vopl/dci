@@ -1,0 +1,33 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+#pragma once
+
+#include <type_traits>
+#include "../smallIntegral.hpp"
+
+namespace dci::stiac::serialization
+{
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <class T> concept Enum = std::is_enum_v<T>;
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <Enum E>
+    void save(auto& ar, const E& v)
+    {
+        using Ut = std::underlying_type_t<E>;
+
+        ar << smallIntegral(static_cast<Ut>(v));
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <Enum E>
+    void load(auto& ar, E& v)
+    {
+        using Ut = std::underlying_type_t<E>;
+
+        Ut uv;
+        ar >> stiac::smallIntegral(uv);
+
+        v = static_cast<E>(uv);
+    }
+}

@@ -1,0 +1,95 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "ppn/node/link/feature.idl"
+
+scope ppn::service
+{
+    scope aup_legacy_since_2025_04 ~ aup
+    {
+        exception Error {}
+
+        alias Oid = array<uint8, 32>;
+
+        enum BlobStatus
+        {
+            present,
+            missingAndWanted,
+            missingAndUnwanted,
+        }
+
+        interface BlobTransfer
+        {
+            out statusChanged(BlobStatus);
+            in getPiece(uint32 offset, uint32 size) -> tuple<BlobStatus, bytes>;
+        }
+
+        interface Supplier
+        {
+            in startBlobTransfer(Oid, BlobTransfer::Opposite);
+        }
+
+        interface SupplierCatalog : Supplier
+        {
+            in getReleases() -> set<Oid>;
+            out newRelease(Oid);
+        }
+
+        interface SupplierStorage : Supplier
+        {
+        }
+    }
+
+    scope aup
+    {
+        exception Error {}
+
+        interface BlobTransfer
+        {
+            out available();
+            in getPiece(uint32 offset, uint32 size) -> opt<bytes>;
+        }
+    }
+
+    scope aup
+    {
+        exception AmbiguousOid8 : Error {}
+        alias Oid = array<uint8, 32>;
+
+        interface ReleaseObserver
+        {
+            out newRelease(Oid);
+        }
+        interface ReleaseGetter
+        {
+            in getReleases() -> set<Oid>;
+        }
+        interface BlobTransferStarter
+        {
+            in startBlobTransfer(Oid, BlobTransfer::Opposite);
+        }
+    }
+
+    scope aup
+    {
+        alias Oid8 = array<uint8, 8>;
+
+        interface OidClarifier8
+        {
+            in clarifyOid(Oid8) -> set<Oid>;
+        }
+        interface ReleaseObserver8
+        {
+            out newRelease(Oid8);
+        }
+        interface ReleaseGetter8
+        {
+            in getReleases() -> set<Oid8>;
+        }
+        interface BlobTransferStarter8
+        {
+            in startBlobTransfer(Oid8, BlobTransfer::Opposite);
+        }
+    }
+
+    interface Aup : node::link::Feature, node::link::feature::Payload {}
+}

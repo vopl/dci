@@ -1,0 +1,29 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "../endpoint.idl"
+require "../option.idl"
+
+scope net::stream
+{
+    interface Channel
+    {
+        in  setOption           (Option)    -> none;
+
+        in  localEndpoint       ()          -> Endpoint;
+        in  remoteEndpoint      ()          -> Endpoint;
+
+        in  send                (bytes);
+        out sended              (uint64 now, uint64 wait);
+
+        in  setReceiveGranula   (uint64);
+        in  startReceive        ();// setReceiveGranula(max)
+        in  stopReceive         ();// setReceiveGranula(0)
+        out received            (bytes);
+
+        out failed              (exception);
+
+        in  shutdown            (bool input, bool output);
+        in  close               ();
+        out closed              ();
+    }
+}

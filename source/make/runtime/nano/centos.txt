@@ -1,0 +1,14 @@
+t3a.nano, centos-7 minimal
+
+yum update
+reboot
+
+yum install epel-release
+yum install mc htop atop wget tar bzip2 unzip iptraf-ng nethogs
+
+######################################
+useradd --create-home dci
+
+#... place files
+systemctl enable /home/dci/dci-node.service
+systemctl start dci-node

@@ -1,0 +1,182 @@
+
+key auto
+{
+;    memInfo
+;    cpuInfo
+;    diskInfo
+;    netMacAddress
+;    osInfo
+;    appPath
+;    appPid
+;    domainname
+;    hostname
+;    username
+;    constant
+;    random
+}
+
+accept
+{
+    inproc off
+
+    local off
+
+    ip6 on
+    {
+        ;port 0
+        ;port 48611
+
+        host on
+        link on
+        lan on
+        wan on
+    }
+
+    ip4 on
+    {
+        ;port 0
+        ;port 48611
+
+        host on
+        link on
+        lan on
+        wan on
+    }
+
+
+    ;custom inproc://tratata
+    ;custom local:///tmp/ppn-node-tratata.sock
+    ;custom tcp4://0.0.0.0:48611
+    ;custom tcp6://[::]:48611
+}
+
+natt
+{
+    pmp on
+    pcp on
+    igdp on
+    awsEc2 off
+    custom
+    {
+        ;tcp4://192.168.0.2:48612 tcp4://1.2.3.4:48612
+    }
+}
+
+connect
+{
+    inproc on
+    local on
+    ip6 on
+    ip4 on
+
+    ;custom inproc://
+    ;custom local://
+    ;custom tcp4://
+    ;custom tcp6://
+}
+
+features
+{
+    ppn::connectivity::Reest
+    {
+        intensity 0.016
+    }
+    ppn::connectivity::Demand
+    {
+        intensity 10
+    }
+    ppn::connectivity::Joining
+
+    ppn::discovery::local::Preset
+    {
+    ;    tcp://example.com:7823
+    ;    tcp://1.2.3.4:2985
+    ;    tcp6://{fe80::e23f:49ff:fe7a:a87b}:3875
+    }
+
+    ppn::discovery::local::ProcessScope
+    ppn::discovery::local::MachineScope
+    ppn::discovery::local::LanScope
+
+    ppn::discovery::Peer
+    {
+        intensity 1
+    }
+
+    ppn::topology::Lis
+    {
+        gridBits 32
+        gridSize 512
+        intensity 0.1
+    }
+    ;ppn::topology::Geo
+
+    ppn::service::Dht
+    ppn::service::Aup
+
+    ppn::node::Logger
+    {
+        start on
+        stop on
+        failed on
+
+        ras off
+        {
+            discovered on
+        }
+
+        las on
+        {
+            declared on
+            undeclared on
+        }
+
+        connector on
+        {
+            started on
+            stopped on
+
+            session off
+            {
+                new on
+                connected on
+                idSpecified on
+                failed on
+                joined on
+                closed on
+            }
+        }
+
+        acceptor on
+        {
+            started on
+            stopped on
+            failed on
+
+            session off
+            {
+                new on
+                idSpecified on
+                failed on
+                joined on
+                closed on
+            }
+        }
+
+        link on
+        {
+            local on
+            {
+                id on
+            }
+            remote on
+            {
+                joinedByConnect on
+                joinedByAccept on
+                closed on
+                failed on
+            }
+        }
+    }
+}
+

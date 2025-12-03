@@ -1,0 +1,37 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+scope stiac
+{
+    scope localEdge
+    {
+        enum State
+        {
+            null        = 0x00,
+            work        = 0x10,
+            pause       = 0x30,
+            fail        = 0x40,
+        }
+
+        exception Error {}
+        exception BadState      : Error {}
+        exception BadArgument   : Error {}
+        exception BadInput      : Error {}
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    // локальная сторона, работает посредством интерфейсов
+    interface LocalEdge
+    {
+        in state() -> localEdge::State;
+        out stateChanged(localEdge::State);
+        out failed(exception);
+
+        in put(interface instance) -> none;
+        in putConcrete(interface instance, ilid identifier) -> none;
+
+        in optimisticPut(interface instance);
+        in optimisticPutConcrete(interface instance, ilid identifier);
+
+        out got(interface instance) -> none;
+    }
+}

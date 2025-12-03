@@ -1,0 +1,16 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "../../channel.idl"
+require "request.idl"
+require "response.idl"
+
+scope www::http::server
+{
+    interface Channel
+        : www::Channel
+    {
+        out upgradeHttp2(www::Channel http2ServerChannel) -> bool;
+        out upgradeWs(www::Channel wsChannel) -> bool;
+        out io(Request, Response);
+    }
+}

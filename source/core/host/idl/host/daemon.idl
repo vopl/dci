@@ -1,0 +1,36 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "config.idl"
+
+scope host
+{
+    scope daemon
+    {
+        enum State
+        {
+            null,
+            starting,
+            started,
+            stopping,
+            stopped,
+            failed,
+        }
+
+        exception Error {}
+        exception NoService : Error {}
+    }
+
+    interface Daemon
+    {
+        in state() -> daemon::State;
+
+        out stateChanged(daemon::State);
+        out failed(exception);
+
+        in setName(string name) -> none;
+        in start(Config config) -> none;
+        in stop() -> none;
+
+        in service() -> interface;
+    }
+}

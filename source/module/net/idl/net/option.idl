@@ -1,0 +1,51 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "address.idl"
+
+scope net
+{
+    scope option
+    {
+        //options
+        struct Broadcast            {bool enable;}
+        struct ReuseAddr            {bool enable;}
+
+        struct NoDelay              {bool enable;}
+
+        struct Keepalive            {bool enable; int32 idleSeconds; int32 intervalSeconds; int32 count;}
+
+        struct ReceiveBuf           {uint32 size;}
+        struct SendBuf              {uint32 size;}
+
+        struct ReceiveTimeout       {uint32 milliseconds;}
+        struct SendTimeout          {uint32 milliseconds;}
+        struct UserTimeout          {uint32 milliseconds;}
+
+        struct Linger               {bool enable; int32 timeoutSeconds;}
+
+        struct JoinMulticast        {IpAddress group;}
+        struct LeaveMulticast       {IpAddress group;}
+    }
+
+    alias Option = variant
+    <
+        option::Broadcast,
+        option::ReuseAddr,
+
+        option::NoDelay,
+
+        option::Keepalive,
+
+        option::ReceiveBuf,
+        option::SendBuf,
+
+        option::ReceiveTimeout,
+        option::SendTimeout,
+        option::UserTimeout,
+
+        option::Linger,
+
+        option::JoinMulticast,
+        option::LeaveMulticast
+    >;
+}

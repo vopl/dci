@@ -1,0 +1,11 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "net/address.idl"
+require "net/endpoint.idl"
+require "net/error.idl"
+
+require "net/link.idl"
+require "net/option.idl"
+require "net/stream.idl"
+require "net/datagram.idl"
+require "net/host.idl"

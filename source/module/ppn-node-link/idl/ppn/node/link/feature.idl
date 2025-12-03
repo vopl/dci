@@ -1,0 +1,32 @@
+// e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
+
+require "id.idl"
+require "remote.idl"
+
+scope ppn::node::link
+{
+    scope feature
+    {
+        interface Payload
+        {
+            in ids() -> set<ilid>;
+            out idsChanged();
+
+            in getInstance(Id requestorId, Remote requestor, ilid) -> interface;
+        }
+
+        interface Service
+        {
+            in id() -> Id;
+            out joinedByConnect(Id, Remote);
+            out joinedByAccept(Id, Remote);
+
+            in addPayload(Payload);
+        }
+    }
+
+    interface Feature
+    {
+        in setup(feature::Service);
+    }
+}
