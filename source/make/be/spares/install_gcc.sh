@@ -9,11 +9,11 @@ if [[ "$stage" == "" ]]; then
 fi
 
 #################################
-${CDIR}/prepareBuild.sh gcc https://mirror.kumi.systems/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.xz a7b39bc69cbf9e25826c5a60ab26477001f7c08d85cec04bc0e29cabed6f3cc9
+${CDIR}/prepareBuild.sh gcc https://ftp.mpi-inf.mpg.de/mirrors/gnu/mirror/gcc.gnu.org/pub/gcc/releases/gcc-15.2.0/gcc-15.2.0.tar.xz 438fd996826b0c82485a29da03a72d71d6e3541a83ec702df4271f6fe025d24e
 cd ${WDIR}/gcc
 
 if [ ! -f "prerequisites.stamp" ]; then
-    (cd gcc-14.2.0 && ./contrib/download_prerequisites)
+    (cd gcc-15.2.0 && ./contrib/download_prerequisites)
     touch prerequisites.stamp
 fi
 
@@ -28,7 +28,7 @@ if [ ! -f "install-${stage}.stamp" ]; then
         CFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CFLAGS}" \
         CXXFLAGS_FOR_TARGET="${LOCAL_LDFLAGS} ${LOCAL_CXXFLAGS}" \
         LDFLAGS_FOR_TARGET="${LOCAL_LDFLAGS}" \
-        ../gcc-14.2.0/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
+        ../gcc-15.2.0/configure --prefix=${PREFIX} --libdir=${LIBDIR} \
             --disable-multilib --disable-multiarch \
             --enable-gold=yes --enable-ld=yes \
             --with-system-zlib --with-zstd \

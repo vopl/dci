@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../gmp-6.3.0/configure --prefix=${PREFIX} --libdir=${LIBDIR}
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS} -std=gnu17" CXXFLAGS="${LOCAL_CXXFLAGS} -std=gnu17" ../gmp-6.3.0/configure --prefix=${PREFIX} --libdir=${LIBDIR}
     make -j`nproc`
     make install
 

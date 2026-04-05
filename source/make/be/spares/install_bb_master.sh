@@ -23,6 +23,9 @@ pip install 'buildbot[tls]'
 buildbot create-master master
 cp ${CDIR}/bb_master.cfg master/master.cfg
 
+# mkdir master/tls
+# (cd master/tls; openssl req -x509 -nodes -days 36500 -newkey rsa:4096 -keyout ip.key -out ip.crt -subj "/CN=1.1.1.1" )
+
 echo "#!/bin/bash
 cd ${WD} && source sandbox/bin/activate && buildbot start \"\$@\" ./master" > start.sh
 chmod +x start.sh

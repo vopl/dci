@@ -22,6 +22,7 @@ if [ ! -f "install.stamp" ]; then
         --disable-multilib --disable-multiarch \
         --enable-gold=yes --enable-ld=yes \
         --with-system-zlib --with-zstd \
+        --with-system-readline \
         --enable-gprofng=yes --enable-compressed-debug-sections=all --enable-default-compressed-debug-sections-algorithm=zstd \
         --enable-year2038 \
         --enable-languages=c,c++,lto \

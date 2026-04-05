@@ -21,6 +21,7 @@ ${CDIR}/spares/install_gcc.sh 2
 ${CDIR}/spares/install_binutils.sh 2
 
 ${CDIR}/spares/install_pkg-config.sh
+${CDIR}/spares/install_ncurses.sh
 ${CDIR}/spares/install_readline.sh
 
 ${CDIR}/spares/install_chrpath.sh

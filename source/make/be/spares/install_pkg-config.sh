@@ -12,7 +12,7 @@ if [ ! -f "install.stamp" ]; then
     mkdir -p build
     pushd build
 
-    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS}" CXXFLAGS="${LOCAL_CXXFLAGS}" ../pkg-config-0.29.2/configure \
+    LDFLAGS="${LOCAL_LDFLAGS}" CFLAGS="${LOCAL_CFLAGS} -std=gnu17" CXXFLAGS="${LOCAL_CXXFLAGS} -std=gnu17" ../pkg-config-0.29.2/configure \
         --prefix=${PREFIX} --libdir=${LIBDIR} \
         --with-system_include_path=${PREFIX}/include \
         --with-system_library_path=${PREFIX}/lib \
