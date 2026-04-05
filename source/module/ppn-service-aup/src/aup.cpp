@@ -106,7 +106,7 @@ namespace dci::module::ppn::service
         , _supplierStorageApi{idl::interface::Initializer{}}
         , _supplierCatalog{_supplierCatalogApi}
         , _supplierStorage{_supplierStorageApi}
-        , _consumerQuota{100}
+        , _consumerQuota{1'000'000}
         , _consumerCatalog{&_consumerQuota}
         , _consumerStorage{&_consumerQuota}
     {
