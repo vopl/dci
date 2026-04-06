@@ -15,10 +15,28 @@ rm -rf ${WD}
 mkdir -p ${WD}
 cd ${WD}
 
-python3.12 -m venv sandbox
+python3 -m venv sandbox
 source sandbox/bin/activate
 
-pip install --upgrade pip
+
+if [[ $(uname -o) == "Msys" ]]; then
+  python -m pip install --upgrade pip
+  pip install git+https://github.com/python-cffi/cffi.git@main
+  pip install hatchling
+  pip install setuptools
+  pip install maturin
+  pip install --no-build-isolation autobahn
+
+  #pip install --upgrade --force-reinstall pypiwin32 --------- это не работает
+  #копируем ручками
+  #C:\msys64\ucrt64\lib\python3.14\site-packages\*win* ->
+  #C:\msys64\home\vopl\bb-worker\sandbox\lib\python3.14\site-packages
+
+
+else
+  pip install --upgrade pip
+fi
+
 pip install 'buildbot[bundle]'
 pip install 'buildbot[tls]'
 
@@ -74,3 +92,6 @@ cp ${WD}/bb-worker.service /etc/systemd/system
 systemctl enable bb-worker
 systemctl start bb-worker
 ";
+
+# под виндой вешаем на крон примерно такое
+# C:\msys64\msys2_shell.cmd -defterm -no-start -ucrt64 -here -c "cd /home/vopl/bb-worker && ./start.sh"

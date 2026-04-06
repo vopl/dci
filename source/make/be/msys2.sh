@@ -16,8 +16,9 @@ pacman -Sq --needed \
 	mingw-w64-ucrt-x86_64-libsecret \
 	mingw-w64-ucrt-x86_64-qt6-base mingw-w64-ucrt-x86_64-qt6-tools mingw-w64-ucrt-x86_64-qt6-declarative \
 	mingw-w64-ucrt-x86_64-qt-creator mingw-w64-ucrt-x86_64-gdb \
-	mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-clang-analyzer mingw-w64-ucrt-x86_64-clang-tools-extra mingw-w64-ucrt-x86_64-compiler-rt
-
+	mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-clang-analyzer mingw-w64-ucrt-x86_64-clang-tools-extra mingw-w64-ucrt-x86_64-compiler-rt \
+	mingw-w64-ucrt-x86_64-rust mingw-w64-ucrt-x86_64-python-setuptools-rust \
+	mingw-w64-ucrt-x86_64-python-pywin32
 
 
 # добавить к путям C:\msys64\usr\bin\;C:\msys64\ucrt64\bin\
