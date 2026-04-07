@@ -653,7 +653,7 @@ namespace dci::module::ppn::node::utils
 
         {
             String kind = config.get_value(String{});
-            if(kind.empty() || "auto" == kind)
+            if("auto" == kind)
             {
                 tryOne("memInfo");
                 tryOne("cpuInfo");
@@ -669,7 +669,7 @@ namespace dci::module::ppn::node::utils
 
                 tryOne("constant", config::ptree{String{"auto"}});
             }
-            else
+            else if(!kind.empty())
             {
                 tryOne(kind);
             }
