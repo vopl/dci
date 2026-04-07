@@ -108,24 +108,49 @@ namespace dci::poll::impl::polling
         }
 
         epoll_event* eventsBuffer = reinterpret_cast<epoll_event *>(_eventsBuffer);
+
+        auto epollPWaitExec = [&]
+        {
+            int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
+            return epoll_pwait(
+                        _fd,
+                        eventsBuffer,
+                        sizeof(_eventsBuffer)/sizeof(epoll_event),
+                        milliseconds,
+                        nullptr);
+        };
+
 #if HAVE_EPOLL_PWAIT2
+        auto epollPWait2Exec = [&]
+        {
             struct timespec timespec;
             timespec.tv_sec = std::chrono::floor<std::chrono::seconds>(timeout).count();
             timespec.tv_nsec = std::chrono::floor<std::chrono::nanoseconds>(timeout - std::chrono::seconds{timespec.tv_sec}).count();
-            int eventsAmount = epoll_pwait2(
-                                   _fd,
-                                   eventsBuffer,
-                                   sizeof(_eventsBuffer)/sizeof(epoll_event),
-                                   &timespec,
-                                   nullptr);
+            return epoll_pwait2(
+                        _fd,
+                        eventsBuffer,
+                        sizeof(_eventsBuffer)/sizeof(epoll_event),
+                        &timespec,
+                        nullptr);
+        };
+
+        static bool epollPWait2Supported = true;
+        int eventsAmount;
+        if(epollPWait2Supported)
+        {
+            eventsAmount = epollPWait2Exec();
+            if(-1 == eventsAmount && ENOSYS == errno)
+            {
+                epollPWait2Supported = false;
+                eventsAmount = epollPWaitExec();
+            }
+        }
+        else
+        {
+            eventsAmount = epollPWaitExec();
+        }
 #else
-            int milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
-            int eventsAmount = epoll_pwait(
-                                   _fd,
-                                   eventsBuffer,
-                                   sizeof(_eventsBuffer)/sizeof(epoll_event),
-                                   milliseconds,
-                                   nullptr);
+        int eventsAmount = epollPWaitExec();
 #endif
 
         if(-1 == eventsAmount)
