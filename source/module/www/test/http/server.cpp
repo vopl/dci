@@ -25,6 +25,17 @@ using namespace dci::primitives;
 using namespace http;
 using namespace std::literals;
 
+namespace
+{
+    std::string makeRepeat(std::size_t count, char c)
+    {
+        std::string res;
+        res.resize(count);
+        std::fill(res.begin(), res.end(), c);
+        return res;
+    }
+}
+
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 TEST(module_www_http_server, noInput)
 {
@@ -81,7 +92,7 @@ TEST(module_www_http_server, badMethod)
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 TEST(module_www_http_server, bigUri)
 {
-    SERVER_PLAY_2_FAIL("METH " + std::string(8193, 'x'), request::TooBigUri, "HTTP/1.1 414 URI Too Long\r\nConnection: close\r\n\r\n");
+    SERVER_PLAY_2_FAIL("METH " + makeRepeat(8193, 'x'), request::TooBigUri, "HTTP/1.1 414 URI Too Long\r\nConnection: close\r\n\r\n");
 }
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -118,7 +129,7 @@ TEST(module_www_http_server, badVersion)
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 TEST(module_www_http_server, badHeaderKey)
 {
-    SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\n" + std::string(65, 'x') + ": xyz\r\n", request::BadRequest, "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
+    SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\n" + makeRepeat(65, 'x') + ": xyz\r\n", request::BadRequest, "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
 
     SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\n: xyz\r\n",            request::BadRequest, "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
     SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\nxyz\r\n:\r\n",         request::BadRequest, "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
@@ -132,10 +143,10 @@ TEST(module_www_http_server, badHeaderKey)
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 TEST(module_www_http_server, badHeaderValue)
 {
-    SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\nh:" + std::string(8193, 'v') + "\r\n", request::TooBigHeaders, "HTTP/1.1 431 Request Header Fields Too Large\r\nConnection: close\r\n\r\n");
+    SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\nh:" + makeRepeat(8193, 'v') + "\r\n", request::TooBigHeaders, "HTTP/1.1 431 Request Header Fields Too Large\r\nConnection: close\r\n\r\n");
 
     {
-        std::string hdr = "h:" + std::string(4096, 'v') + "\r\n";
+        std::string hdr = "h:" + makeRepeat(4096, 'v') + "\r\n";
         SERVER_PLAY_2_FAIL("GET uri HTTP/1.1\r\n" + hdr + hdr + hdr + hdr + hdr + hdr + hdr + hdr + "\r\n", request::TooBigHeaders, "HTTP/1.1 431 Request Header Fields Too Large\r\nConnection: close\r\n\r\n");
     }
 }

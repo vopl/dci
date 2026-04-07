@@ -195,8 +195,6 @@ namespace dci::module::ppn::node::utils
                             throw api::Error("GetVolumeInformationW failed: "+dci::utils::win32::error::last().message());
                         }
 
-                        std::wstring_convert<std::codecvt_utf8<wchar_t>> toUtf8;
-
                         accumuler.add("volume");
                         accumuler.add(volume);
                         accumuler.barrier();
@@ -218,7 +216,7 @@ namespace dci::module::ppn::node::utils
 
                         if(INVALID_HANDLE_VALUE == hVolume)
                         {
-                            throw api::Error("CreateFileW for "+toUtf8.to_bytes(volume)+" failed: "+dci::utils::win32::error::last().message());
+                            throw api::Error("CreateFileW for "+dci::utils::str::wideConvert(volume)+" failed: "+dci::utils::win32::error::last().message());
                         }
 
                         char bigBuf[32768];
@@ -234,7 +232,7 @@ namespace dci::module::ppn::node::utils
                                NULL))
                         {
                             CloseHandle(hVolume);
-                            throw api::Error("DeviceIoControl for "+toUtf8.to_bytes(volume)+" failed: "+dci::utils::win32::error::last().message());
+                            throw api::Error("DeviceIoControl for "+dci::utils::str::wideConvert(volume)+" failed: "+dci::utils::win32::error::last().message());
                         }
                         CloseHandle(hVolume);
 
@@ -262,7 +260,7 @@ namespace dci::module::ppn::node::utils
 
                             if(INVALID_HANDLE_VALUE == hPhysicalDrive)
                             {
-                                throw api::Error("CreateFileW for "+toUtf8.to_bytes(pdrive)+" failed: "+dci::utils::win32::error::last().message());
+                                throw api::Error("CreateFileW for "+dci::utils::str::wideConvert(pdrive)+" failed: "+dci::utils::win32::error::last().message());
                             }
 
                             STORAGE_PROPERTY_QUERY query;
@@ -285,7 +283,7 @@ namespace dci::module::ppn::node::utils
                                 NULL))
                             {
                                 CloseHandle(hPhysicalDrive);
-                                throw api::Error("DeviceIoControl for "+toUtf8.to_bytes(pdrive)+" failed: "+dci::utils::win32::error::last().message());
+                                throw api::Error("DeviceIoControl for "+dci::utils::str::wideConvert(pdrive)+" failed: "+dci::utils::win32::error::last().message());
                             }
                             CloseHandle(hPhysicalDrive);
                             STORAGE_DEVICE_DESCRIPTOR *descrip = (STORAGE_DEVICE_DESCRIPTOR *)buffer;

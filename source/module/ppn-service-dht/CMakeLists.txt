@@ -7,6 +7,9 @@ dciIntegrationUnit(module-ppn-service-dht
 file(GLOB_RECURSE SRC src/*)
 file(GLOB_RECURSE IDL idl/*)
 
+# TODO: убрать этот воркараунд в любой момент, сейчас он нужен для подвления false-positive ворнинга с подачи msys2/mingw gcc 15.2.0
+set_source_files_properties(src/dht.cpp PROPERTIES COMPILE_OPTIONS -Wno-maybe-uninitialized)
+
 add_library(${UNAME} MODULE ${INC} ${SRC} ${IDL})
 target_include_directories(${UNAME} PRIVATE src)
 

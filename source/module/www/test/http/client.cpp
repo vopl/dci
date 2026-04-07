@@ -24,6 +24,17 @@ using namespace dci::idl;
 using namespace dci::primitives;
 using namespace http;
 
+namespace
+{
+    std::string makeRepeat(std::size_t count, char c)
+    {
+        std::string res;
+        res.resize(count);
+        std::fill(res.begin(), res.end(), c);
+        return res;
+    }
+}
+
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 TEST(module_www_http_client, noInput)
 {
@@ -100,7 +111,7 @@ TEST(module_www_http_client, badStatusCode)
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 TEST(module_www_http_client, badStatusText)
 {
-    CLIENT_PLAY_2_FAIL("HTTP/1.1 200 "+std::string(65, 'x')+"\r\n", response::BadResponse);
+    CLIENT_PLAY_2_FAIL("HTTP/1.1 200 "+makeRepeat(65, 'x')+"\r\n", response::BadResponse);
 }
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

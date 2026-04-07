@@ -20,6 +20,7 @@
 #include <dci/utils/ip.hpp>
 #include <dci/utils/overloaded.hpp>
 #include <dci/utils/compiler.hpp>
+#include <dci/utils/str.hpp>
 #include "net.hpp"
 
 #include <memory>
@@ -28,7 +29,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
-#include <codecvt>
 
 #include <unistd.h>
 

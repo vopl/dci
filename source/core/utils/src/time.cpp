@@ -9,6 +9,7 @@
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
 #include <dci/utils/time.hpp>
+#include <dci/utils/str.hpp>
 #include <string>
 #include <string_view>
 #include <chrono>
@@ -17,7 +18,6 @@
 
 #if _WIN32
 #   include <unordered_map>
-#   include <codecvt>
 #   include <windows.h>
 #endif
 
@@ -219,8 +219,6 @@ namespace dci::utils::time
     {
         static const time_zone* result = []
         {
-            using convert_type = std::codecvt_utf8<wchar_t>;
-            std::wstring_convert<convert_type, wchar_t> converter;
             std::string zoneName;
 
             TIME_ZONE_INFORMATION tzi{};
@@ -231,10 +229,10 @@ namespace dci::utils::time
                 return current_zone();
             case TIME_ZONE_ID_UNKNOWN:
             case TIME_ZONE_ID_STANDARD:
-                zoneName = converter.to_bytes(tzi.StandardName);
+                zoneName = str::wideConvert(tzi.StandardName);
                 break;
             case TIME_ZONE_ID_DAYLIGHT:
-                zoneName = converter.to_bytes(tzi.DaylightName);
+                zoneName = str::wideConvert(tzi.DaylightName);
                 break;
             }
 

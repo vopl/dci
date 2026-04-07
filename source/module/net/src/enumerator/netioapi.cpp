@@ -392,8 +392,7 @@ namespace dci::module::net::enumerator
         dbgAssert(link);
 
         link->setHwAddress(List<uint8>{&fullRow2.PhysicalAddress[0], &fullRow2.PhysicalAddress[0] + fullRow2.PhysicalAddressLength});
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> toUtf8;
-        link->setName(toUtf8.to_bytes(&fullRow2.Alias[0]));
+        link->setName(dci::utils::str::wideConvert(&fullRow2.Alias[0]));
         link->setMtu(fullRow2.Mtu);
 
         api::link::Flags flags{};

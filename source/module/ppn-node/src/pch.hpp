@@ -20,6 +20,7 @@
 #include <dci/utils/uri.hpp>
 #include <dci/utils/ip.hpp>
 #include <dci/utils/atScopeExit.hpp>
+#include <dci/utils/str.hpp>
 #ifdef _WIN32
 #   include <dci/utils/win32/error.hpp>
 #endif
