@@ -155,20 +155,15 @@ namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer::base
 
             for(;;)
             {
-                LOGD(_b->_name<<": start0 "<<utils::b2h(_oid));
                 if(!transfersReady.empty())
                 {
-                    LOGD(_b->_name<<": start1 "<<utils::b2h(_oid));
                     auto wl = workRaii();
-                    LOGD(_b->_name<<": start2 "<<utils::b2h(_oid));
 
                     if(!transfersReady.empty())
                     {
-                        LOGD(_b->_name<<": start3 "<<utils::b2h(_oid));
                         TransferPtr transfer = *transfersReady.begin();
                         dbgAssert(transfer->_api);
 
-                        LOGD(_b->_name<<": blob get piece: "<<utils::b2h(_oid)<<", "<<recvBuffer.payloadSize()<<", "<<granulaSize+0);
                         auto resf = transfer->_api->getPiece(recvBuffer.payloadSize(), granulaSize+0);
                         resf.wait();
 
@@ -177,7 +172,6 @@ namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer::base
                             auto res = resf.detachValue();
 
                             api_legacy_since_2025_04::BlobStatus bs = std::get<0>(res);
-                            LOGD(_b->_name<<": blob got piece: "<<utils::b2h(_oid)<<", "<<recvBuffer.payloadSize()<<", "<<granulaSize+0 << ", bs " << static_cast<int>(bs));
 
                             updateTransfer(transfer, bs);
                             if(api_legacy_since_2025_04::BlobStatus::present != bs)

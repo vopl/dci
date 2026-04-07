@@ -75,13 +75,11 @@ namespace dci::module::ppn::service::aup_legacy_since_2025_04::supplier
         //in getPiece(uint32 offset, uint32 size) -> tuple<BlobStatus, bytes>;
         bt->getPiece() += _sbsOwner * [this](uint32 offset, uint32 size)
         {
-            LOGD("getPiece for " << utils::b2h(_oid) << ", " << offset << ", " << size);
             if(api_legacy_since_2025_04::BlobStatus::present == _status)
             {
                 try
                 {
                     Bytes piece = _base->getPiece(_oid, offset, size);
-                    LOGD("has piece " << piece.size());
                     return cmt::readyFuture(Tuple{_status, std::move(piece)});
                 }
                 catch(...)
@@ -91,7 +89,6 @@ namespace dci::module::ppn::service::aup_legacy_since_2025_04::supplier
                 }
             }
 
-            LOGD("has no piece");
             return cmt::readyFuture(Tuple{_status, Bytes{}});
         };
 
