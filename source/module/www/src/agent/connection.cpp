@@ -109,19 +109,32 @@ namespace dci::module::www::agent
                 {
                     ipCandidate.visit([this](auto& ep){ep.port = _site->endpoint()._port;});
 
+                    auto processCurrentException = [&](std::string prefix)
+                    {
+                        lastConnectFail = std::current_exception();
+                        if(_logStream)
+                            _logStream->content(prefix + " " + toString(ipCandidate) + " failed: " + exception::toString(lastConnectFail));
+                    };
+
                     try
                     {
+                        if(_logStream)
+                            _logStream->content(String{"try to connect "} + toString(ipCandidate));
+
                         _netChannel = _agent->_netStreamClient->connect(ipCandidate.visit([&](auto&&v){return net::Endpoint{std::move(v)};})).value();
 
                         _netChannel.involvedChanged() += _sol * onInvolvedChanged;
                         if(_logStream)
                             _logStream->content("connected " + toString(ipCandidate));
                     }
+                    catch(const cmt::task::Stop&)
+                    {
+                        processCurrentException("connect");
+                        return;
+                    }
                     catch(...)
                     {
-                        lastConnectFail = std::current_exception();
-                        if(_logStream)
-                            _logStream->content("connect " + toString(ipCandidate) + " failed: " + exception::toString(lastConnectFail));
+                        processCurrentException("connect");
                         continue;
                     }
 
@@ -130,11 +143,14 @@ namespace dci::module::www::agent
                         _netChannel->setOption(net::option::Keepalive{true, 10, 5, 4}).value();
                         _netChannel->setOption(net::option::UserTimeout{30*1000}).value();
                     }
+                    catch(const cmt::task::Stop&)
+                    {
+                        processCurrentException("setup socket for");
+                        return;
+                    }
                     catch(...)
                     {
-                        lastConnectFail = std::current_exception();
-                        if(_logStream)
-                            _logStream->content("setup socket for " + toString(ipCandidate) + " failed: " + exception::toString(lastConnectFail));
+                        processCurrentException("setup socket for");
                         _netChannel->shutdown(true, true);
                         _netChannel->close();
                         _netChannel.reset();
@@ -563,6 +579,8 @@ namespace dci::module::www::agent
         }
 
         _iosPerforming.clear();
+
+        _tol.flush();
 
         if(_logStream)
         {
