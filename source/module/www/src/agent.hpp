@@ -45,6 +45,11 @@ namespace dci::module::www
         void fail(ExceptionPtr&& fail = {});
         void io2Site(agent::Io* io);
 
+        Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannelsNet(sbs::Owner& sol);
+        Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannelsHttp(sbs::Owner& sol);
+        static Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannels(sbs::Owner& sol, const List<api::agent::Hook<>::Opposite>& hooks);
+        static void interconnect(const api::stream::Channel<>::Opposite& remote, sbs::Owner& sol, const api::stream::Channel<>& local);
+
     private:
         cmt::task::Owner                        _tol;
         host::Manager*                          _hostManager{};
@@ -64,6 +69,9 @@ namespace dci::module::www
         uint32 _idleConnectionTimeoutMs     {1000*60*60*3};
         uint32 _maxIoPerformingPerConection {1};
         uint32 _maxIoPerformingPerSite      {~uint32{}};
+
+        List<api::agent::Hook<>::Opposite> _hooksNet;
+        List<api::agent::Hook<>::Opposite> _hooksHttp;
 
         using Ios = agent::OwningDList<agent::Io>;
 

@@ -153,19 +153,25 @@ namespace dci::module::www::agent
                 }
 
                 // forward to www channel
-                api::stream::Channel<> nextWwwChannel;
+                api::stream::Channel<> local;
                 {
-                    api::stream::Channel<>::Opposite nextWwwChannelOpposite = nextWwwChannel.init2();
-
-                    _netChannel->received() += _sol * [nextWwwChannelOpposite](auto&& data)
+                    api::stream::Channel<>::Opposite remote;
+                    std::tie(local, remote) = _agent->makeHookChannelsNet(_sol);
+                    dbgAssert(!local == !remote);
+                    if(!local)
                     {
-                        nextWwwChannelOpposite->received(std::forward<decltype(data)>(data));
+                        remote = local.init2();
+                    }
+
+                    _netChannel->received() += _sol * [remote](auto&& data)
+                    {
+                        remote->received(std::forward<decltype(data)>(data));
                     };
 
-                    _netChannel->failed() += _sol * [this, nextWwwChannelOpposite](auto&& error)
+                    _netChannel->failed() += _sol * [this, remote](auto&& error)
                     {
                         if(_tlsChannel)
-                            nextWwwChannelOpposite->failed(std::forward<decltype(error)>(error));
+                            remote->failed(std::forward<decltype(error)>(error));
                         else
                         {
                             auto next = [this, error=std::forward<decltype(error)>(error)]
@@ -179,13 +185,13 @@ namespace dci::module::www::agent
                                 next();
                         }
                     };
-                    _netChannel->closed() += _sol * [this, nextWwwChannelOpposite]()
+                    _netChannel->closed() += _sol * [this, remote]()
                     {
                         if(_logStream)
                             _logStream->content("net closed");
 
                         if(_tlsChannel)
-                            nextWwwChannelOpposite->closed();
+                            remote->closed();
                         else
                         {
                             auto next = [this]
@@ -201,27 +207,27 @@ namespace dci::module::www::agent
                         }
                     };
 
-                    nextWwwChannelOpposite->close() += _sol * [this]()
+                    remote->close() += _sol * [this]()
                     {
                         _netChannel->close();
                     };
 
-                    nextWwwChannelOpposite->send() += _sol * [this](auto&& data)
+                    remote->send() += _sol * [this](auto&& data)
                     {
                         _netChannel->send(std::forward<decltype(data)>(data));
                     };
 
-                    nextWwwChannelOpposite->startReceive() += _sol * [this]()
+                    remote->startReceive() += _sol * [this]()
                     {
                         _netChannel->startReceive();
                     };
 
-                    nextWwwChannelOpposite->stopReceive() += _sol * [this]()
+                    remote->stopReceive() += _sol * [this]()
                     {
                         _netChannel->stopReceive();
                     };
 
-                    nextWwwChannelOpposite->shutdown() += _sol * [this]()
+                    remote->shutdown() += _sol * [this]()
                     {
                         _netChannel->shutdown(true, true);
                     };
@@ -233,7 +239,7 @@ namespace dci::module::www::agent
                     String alpnProtoSelected;
                     try
                     {
-                        _tlsChannel = _agent->_wwwTls->client(std::move(nextWwwChannel), Opt<String>{_site->_endpoint._host}).value();
+                        _tlsChannel = _agent->_wwwTls->client(std::move(local), Opt<String>{_site->_endpoint._host}).value();
                         alpnProtoSelected = _tlsChannel->alpnProtoSelected().value();
                     }
                     catch(...)
@@ -244,7 +250,7 @@ namespace dci::module::www::agent
                     _tlsChannel.involvedChanged() += _sol * onInvolvedChanged;
                     if(_logStream)
                         _logStream->content("secured" + (alpnProtoSelected.empty() ? String{} : " for " + alpnProtoSelected));
-                    nextWwwChannel = _tlsChannel;
+                    local = _tlsChannel;
 
                     _tlsChannel->failed() += _sol * [this](auto&& error)
                     {
@@ -258,10 +264,16 @@ namespace dci::module::www::agent
                     };
                 }
 
+                if(auto [hookLocal, hookRemote] = _agent->makeHookChannelsHttp(_sol); hookLocal)
+                {
+                    Agent::interconnect(hookRemote, _sol, local);
+                    local = hookLocal;
+                }
+
                 // http
                 try
                 {
-                    _httpChannel = _agent->_wwwFactory->stream2HttpClient(std::move(nextWwwChannel)).value();
+                    _httpChannel = _agent->_wwwFactory->stream2HttpClient(std::move(local)).value();
                 }
                 catch(...)
                 {

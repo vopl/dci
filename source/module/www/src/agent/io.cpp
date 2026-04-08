@@ -496,6 +496,7 @@ namespace dci::module::www::agent
     void Io::logData(const Bytes& data, bool done, std::string prefix)
     {
         log([&]{ return prefix + " data " + std::to_string(data.size()) + " " + (done ? "done" : "...");});
+        log([&]{ return prefix + " data content: [" + data.toString() + "]";});
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

@@ -106,6 +106,18 @@ namespace dci::module::www
             _maxIoPerformingPerSite         = maxIoPerformingPerSite;
         };
 
+        // in hookNet(agent::Hook);
+        methods()->hookNet() += serviceSol() * [this](api::agent::Hook<>::Opposite&& hook)
+        {
+            _hooksNet.emplace_back(std::move(hook));
+        };
+
+        // in hookHttp(agent::Hook);
+        methods()->hookHttp() += serviceSol() * [this](api::agent::Hook<>::Opposite&& hook)
+        {
+            _hooksHttp.emplace_back(std::move(hook));
+        };
+
         // in io(agent::Request) -> agent::Response;
         methods()->io() += serviceSol() * [this](api::agent::io::Request&& request)
         {
@@ -297,4 +309,84 @@ namespace dci::module::www
         agent::Site& site = const_cast<agent::Site&>(*iter);
         site.perform(io);
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> Agent::makeHookChannelsNet(sbs::Owner& sol)
+    {
+        return makeHookChannels(sol, _hooksNet);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> Agent::makeHookChannelsHttp(sbs::Owner& sol)
+    {
+        return makeHookChannels(sol, _hooksHttp);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> Agent::makeHookChannels(sbs::Owner& sol, const List<api::agent::Hook<>::Opposite>& hooks)
+    {
+        api::stream::Channel<> local;
+        api::stream::Channel<>::Opposite remote;
+
+        if(!hooks.empty())
+        {
+            std::tie(local, remote) = hooks.front()->activated().value();
+
+            for(std::size_t i{1}; i<hooks.size(); ++i)
+            {
+                auto [hookLocal, hookRemote] = hooks[i]->activated().value();
+                Agent::interconnect(hookRemote, sol, local);
+                local = hookLocal;
+            }
+        }
+
+        return {std::move(local), std::move(remote)};
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Agent::interconnect(const api::stream::Channel<>::Opposite& remote, sbs::Owner& sol, const api::stream::Channel<>& local)
+    {
+        ////////////////////////////////////////////////////////////////
+        remote->close() += sol * [local]()
+        {
+            local->close();
+        };
+
+        remote->send() += sol * [local](auto&& data)
+        {
+            local->send(std::forward<decltype(data)>(data));
+        };
+
+        remote->startReceive() += sol * [local]()
+        {
+            local->startReceive();
+        };
+
+        remote->stopReceive() += sol * [local]()
+        {
+            local->stopReceive();
+        };
+
+        remote->shutdown() += sol * [local]()
+        {
+            local->shutdown();
+        };
+
+        ////////////////////////////////////////////////////////////////
+        local->closed() += sol * [remote]()
+        {
+            remote->closed();
+        };
+
+        local->failed() += sol * [remote](auto&& err)
+        {
+            remote->failed(std::forward<decltype(err)>(err));
+        };
+
+        local->received() += sol * [remote](auto&& data)
+        {
+            remote->received(std::forward<decltype(data)>(data));
+        };
+    }
+
 }

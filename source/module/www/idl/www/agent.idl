@@ -56,21 +56,27 @@ scope www
         {
             struct Request
             {
-                string                          uri;
-                www::http::firstLine::Method    method;
-                list<www::http::Header>         headers;
-                bytes                           body;
+                string                  uri;
+                http::firstLine::Method method;
+                list<http::Header>      headers;
+                bytes                   body;
             }
 
             struct Response
             {
-                www::http::firstLine::Version       version;
-                www::http::firstLine::StatusCode    statusCode;
-                string                              statusText;
-                list<www::http::Header>             headers;
-                bytes                               data;
+                http::firstLine::Version    version;
+                http::firstLine::StatusCode statusCode;
+                string                      statusText;
+                list<http::Header>          headers;
+                bytes                       data;
             }
         }
+
+        interface Hook
+        {
+            out activated() -> tuple<stream::Channel /*local*/, stream::Channel::Opposite /*remote*/>;
+        }
+
     }
 
     interface Agent
@@ -80,7 +86,7 @@ scope www
 
         in tlsSetupTrust() -> tls::setup::Trust;
 
-        in enableCookies() -> www::http::client::cookies::Store;
+        in enableCookies() -> http::client::cookies::Store;
         in enableCookiesInside();
         in disableCookies();
 
@@ -90,8 +96,11 @@ scope www
             uint32 maxIoPerformingPerConection,
             uint32 maxIoPerformingPerSite);
 
+        in hookNet(agent::Hook::Opposite);
+        in hookHttp(agent::Hook::Opposite);
+
         in io(agent::io::Request) -> agent::io::Response;
-        in get(string uri, list<www::http::Header> extraHeaders) -> agent::io::Response;
-        in post(string uri, list<www::http::Header> extraHeaders, bytes data) -> agent::io::Response;
+        in get(string uri, list<http::Header> extraHeaders) -> agent::io::Response;
+        in post(string uri, list<http::Header> extraHeaders, bytes data) -> agent::io::Response;
     }
 }
