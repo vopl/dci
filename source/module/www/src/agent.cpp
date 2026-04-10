@@ -15,10 +15,50 @@
 namespace dci::module::www
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <class I>
+    cmt::Future<I> Agent::getDependency()
+    {
+        return cmt::spawnv<I>() += _tol * [this]
+        {
+            Set<api::agent::DependenciesFactory<>::Opposite> probed;
+
+            for(;;)
+            {
+                for(const api::agent::DependenciesFactory<>::Opposite& dependenciesFactory : _dependenciesFactories)
+                {
+                    if(!probed.emplace(dependenciesFactory).second)
+                        continue;
+
+                    try
+                    {
+                        I res = *dependenciesFactory->activated(I::lid());
+                        if(res)
+                            return res;
+                    }
+                    catch(...)
+                    {
+                        LOGW("dependenciesFactory activation failed for " << I::lid().toIidText() << ": " << exception::toString(std::current_exception()));
+                    }
+                    break;
+                }
+            }
+
+            return *_hostManager->createService<I>();
+        };
+    }
+
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Agent::Agent(host::Manager* hostManager)
         : api::Agent<>::Opposite{idl::interface::Initializer{}}
         , _hostManager{hostManager}
     {
+        // in installDependenciesFactory(DependenciesFactory::Opposite);
+        methods()->installDependenciesFactory() += serviceSol() * [this](api::agent::DependenciesFactory<>::Opposite&& dependenciesFactory)
+        {
+            _dependenciesFactories.emplace(std::move(dependenciesFactory));
+        };
+
         // in enableLog() -> agent::log::Source;
         methods()->enableLog() += serviceSol() * [this]()
         {
@@ -45,7 +85,7 @@ namespace dci::module::www
             if(_cookies)
                 return cmt::readyFuture<api::http::client::cookies::Store<>>(_cookies);
 
-            return _hostManager->createService<api::http::client::Cookies<>>().chain() += serviceSol() * [this](cmt::Future<api::http::client::Cookies<>> in, cmt::Promise<api::http::client::cookies::Store<>> out)
+            return getDependency<api::http::client::Cookies<>>().chain() += serviceSol() * [this](cmt::Future<api::http::client::Cookies<>> in, cmt::Promise<api::http::client::cookies::Store<>> out)
             {
                 if(in.resolvedException())
                 {
@@ -72,7 +112,7 @@ namespace dci::module::www
             if(_cookies)
                 return;
 
-            _hostManager->createService<api::http::client::Cookies<>>().then() += serviceSol() * [this](cmt::Future<api::http::client::Cookies<>> in)
+            getDependency<api::http::client::Cookies<>>().then() += serviceSol() * [this](cmt::Future<api::http::client::Cookies<>> in)
             {
                 if(in.resolvedException())
                     _fail = exception::buildInstance<api::agent::HostFailed>(in.detachException());
@@ -140,10 +180,10 @@ namespace dci::module::www
         {
             try
             {
-                _netHost = _hostManager->createService<net::Host<>>().value();
+                _netHost = getDependency<net::Host<>>().value();
                 _netStreamClient = _netHost->streamClient().value();
                 _netStreamClient->setOption(net::option::Keepalive{true, 10, 5, 3}).value();
-                _wwwFactory = _hostManager->createService<api::Factory<>>().value();
+                _wwwFactory = getDependency<api::Factory<>>().value();
                 _wwwTls = _wwwFactory->tls().value();
                 _wwwTls->setAlpnProtos(List<String>{"http/1.1"}).value();
                 // _wwwTls->setDefaultTrustedCAs().value();

@@ -50,9 +50,15 @@ namespace dci::module::www
         static Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannels(sbs::Owner& sol, const List<api::agent::Hook<>::Opposite>& hooks);
         static void interconnect(const api::stream::Channel<>::Opposite& remote, sbs::Owner& sol, const api::stream::Channel<>& local);
 
+        template <class I>
+        cmt::Future<I> getDependency();
+
     private:
         cmt::task::Owner                        _tol;
         host::Manager*                          _hostManager{};
+
+        Set<api::agent::DependenciesFactory<>::Opposite>
+                                                _dependenciesFactories;
 
         net::Host<>                             _netHost;
         net::stream::Client<>                   _netStreamClient;

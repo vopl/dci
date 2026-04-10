@@ -72,15 +72,21 @@ scope www
             }
         }
 
+        interface DependenciesFactory
+        {
+            out activated(ilid) -> interface;
+        }
+
         interface Hook
         {
             out activated() -> tuple<stream::Channel /*local*/, stream::Channel::Opposite /*remote*/>;
         }
-
     }
 
     interface Agent
     {
+        in installDependenciesFactory(agent::DependenciesFactory::Opposite);
+
         in enableLog() -> agent::log::Source;
         in disableLog();
 
