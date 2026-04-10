@@ -43,6 +43,8 @@ namespace dci::host::impl
         cmt::Future<> runDaemon(const std::vector<std::string>& argv);
         cmt::Future<> runDaemons(const std::vector<std::string>& argv);
 
+        std::optional<idl::ILid> resolveAlias(const std::string& alias);
+
         cmt::Future<idl::Interface> createService(idl::ILid ilid);
         cmt::Future<idl::Interface> createService(const std::string& alias);
         cmt::Future<idl::Interface> getDaemonService(const std::string& name);

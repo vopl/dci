@@ -10,36 +10,19 @@
 
 #pragma once
 
-#include "../api.hpp"
-#include <dci/utils/integer.hpp>
-#include <dci/primitives.hpp>
+#include "pch.hpp"
 
-namespace dci::idl::contract
+namespace dci::module::ppn::service::slave
 {
-    struct Id
-        : Array<uint8, 16>
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    struct Rule
     {
-        static constexpr uint32 _size = 16;
-
-        template <class Int>
-        constexpr Array<Int, 16/sizeof(Int)> asArray() const requires(std::is_integral_v<Int>);
-
-        bool API_DCI_IDL fromHex(const String& hex);
-        String API_DCI_IDL toHex(uint32 chars = _size*2) const;
+        bool            _allow{false};
+        bool            _deny{false};
+        bool            _all{false};
+        Set<idl::ILid>  _concrete;
     };
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    template <class Int>
-    inline constexpr Array<Int, 16/sizeof(Int)> Id::asArray() const requires(std::is_integral_v<Int>)
-    {
-        using Res = Array<Int, _size/sizeof(Int)>;
-        Res res {};
-
-        for(std::size_t i{}; i<_size; ++i)
-        {
-            res[i/sizeof(Int)] |= Int{operator[](i)} << (8 * (i%sizeof(Int)));
-        }
-
-        return res;
-    }
+    using Rules = std::deque<Rule>;
 }

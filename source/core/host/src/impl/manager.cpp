@@ -399,6 +399,22 @@ namespace dci::host::impl
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::optional<idl::ILid> Manager::resolveAlias(const std::string& alias)
+    {
+        if(idl::ILid ilid; ilid.fromIidText(alias))
+        {
+            return {ilid};
+        }
+
+        if(const auto iter = _serviceAliases.find(alias); _serviceAliases.end() != iter)
+        {
+            return {iter->second};
+        }
+
+        return {};
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     cmt::Future<idl::Interface> Manager::createService(idl::ILid ilid)
     {
         const auto iter = _serviceProviders.find(ilid);
@@ -417,26 +433,20 @@ namespace dci::host::impl
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     cmt::Future<idl::Interface> Manager::createService(const std::string& alias)
     {
-        idl::ILid ilid;
-        if(ilid.fromIidText(alias))
-        {
-            if(!ilid)
-            {
-                std::string descr = "iid not registred: "+alias;
-                return cmt::readyFuture<idl::Interface>(std::make_exception_ptr(exception::UnableToCreateService(std::move(descr))));
-            }
-            return createService(ilid);
-        }
-
-        const auto iter = _serviceAliases.find(alias);
-
-        if(_serviceAliases.end() == iter)
+        std::optional<idl::ILid> ilidOpt = resolveAlias(alias);
+        if(!ilidOpt)
         {
             std::string descr = "alias not registred: "+alias;
             return cmt::readyFuture<idl::Interface>(std::make_exception_ptr(exception::UnableToCreateService(std::move(descr))));
         }
 
-        return createService(iter->second);
+        if(!ilidOpt.value())
+        {
+            std::string descr = "iid not registred: "+alias;
+            return cmt::readyFuture<idl::Interface>(std::make_exception_ptr(exception::UnableToCreateService(std::move(descr))));
+        }
+
+        return createService(ilidOpt.value());
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

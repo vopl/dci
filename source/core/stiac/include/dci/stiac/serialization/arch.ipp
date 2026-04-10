@@ -54,7 +54,7 @@ namespace dci::stiac::serialization
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     inline Arch& Arch::operator<<(auto&& v)
     {
-        using stiac::serialization::save;
+        using ::dci::stiac::serialization::save;
 
         save(*this, std::forward<decltype(v)>(v));
         return *this;
@@ -63,7 +63,7 @@ namespace dci::stiac::serialization
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Arch& Arch::operator>>(auto&& v)
     {
-        using stiac::serialization::load;
+        using ::dci::stiac::serialization::load;
 
         load(*this, std::forward<decltype(v)>(v));
         return *this;

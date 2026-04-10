@@ -113,6 +113,24 @@ features
 
     ppn::service::Dht
     ppn::service::Aup
+    ppn::service::Slave
+    {
+        #master 35c320b93642f87519e59ed1f810ed85756832b76c55fc10db8162619376103e
+        #{
+        #    allow *
+        #}
+        #master 35c320b93642f87519e59ed1f810ed85756832b76c55fc10db8162619376103e
+        #{
+        #    allow x::y::Z
+        #    allow x::y::K
+        #}
+        #master 35c320b93642f87519e59ed1f810ed85756832b76c55fc10db8162619376103e
+        #{
+        #    allow *
+        #    deny x::y::Z
+        #    deny x::y::K
+        #}
+    }
 
     ppn::node::Logger
     {

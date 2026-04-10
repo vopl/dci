@@ -75,6 +75,12 @@ namespace dci::host
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::optional<idl::ILid> Manager::resolveAlias(const std::string& alias)
+    {
+        return impl().resolveAlias(alias);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     cmt::Future<idl::Interface> Manager::createService(const idl::IId& iid)
     {
         return impl().createService(idl::ILid {idl::contract::lidRegistry.get(iid._cid), iid._side});

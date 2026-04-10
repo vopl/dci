@@ -67,6 +67,7 @@ namespace dci::host::module
                 cname.erase(cname.begin(), cname.begin()+prefix.size());//откусываем не нужный префикс
             }
 
+            static_assert(s == idl::ISide::primary);
             cname.erase(std::find(cname.begin(), cname.end(), '<'), cname.end());//откусываем специализацию стороной оставляя только имя контракта
 
             _serviceIds.emplace_back(C<s>::Internal::id(), std::move(cname));

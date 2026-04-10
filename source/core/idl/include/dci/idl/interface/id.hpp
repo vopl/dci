@@ -13,6 +13,7 @@
 #include <dci/primitives.hpp>
 #include "../api.hpp"
 #include "../contract/id.hpp"
+#include "../introspection.hpp"
 #include "side.hpp"
 
 namespace dci::idl::interface

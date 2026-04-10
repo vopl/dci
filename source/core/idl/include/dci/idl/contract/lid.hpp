@@ -11,7 +11,6 @@
 #pragma once
 
 #include <dci/primitives.hpp>
-#include "../introspection.hpp"
 
 namespace dci::idl::contract
 {
@@ -34,13 +33,4 @@ namespace dci::idl::contract
     {
         return !_value;
     }
-}
-
-namespace dci::idl::introspection
-{
-    template <> inline constexpr Kind kind<dci::idl::contract::Lid> = Kind::struct_;
-    template <> inline constexpr uint32 basesCount<dci::idl::contract::Lid> = 0;
-    template <> inline constexpr uint32 fieldsCount<dci::idl::contract::Lid> = 1;
-    template <> struct FieldType<dci::idl::contract::Lid, 0> {using result = uint32; };
-    template <> inline constexpr auto fieldValue<dci::idl::contract::Lid, 0> = memberValue<dci::idl::contract::Lid, &dci::idl::contract::Lid::_value>;
 }

@@ -10,20 +10,21 @@
 
 #pragma once
 
-#include "sink.hpp"
-#include "../serialization.hpp"
-#include "serialization.hpp"
+#include "pch.hpp"
+#include "slave/rule.hpp"
 
-namespace dci::stiac::link
+namespace dci::module::ppn::service
 {
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    inline Sink& Sink::operator<<(auto&& v)
+    class Slave
+        : public idl::gen::ppn::service::Slave<>::Opposite
+        , public host::module::ServiceBase<Slave>
     {
-        using ::dci::stiac::serialization::save;
-        using ::dci::stiac::link::serialization::save;
+    public:
+        Slave(host::Manager* hostManager);
+        ~Slave();
 
-        save(*this, std::forward<decltype(v)>(v));
-        return *this;
-    }
-
+    private:
+        host::Manager*                      _hostManager{};
+        std::map<link::Id, slave::Rules>    _master2Rules;
+    };
 }

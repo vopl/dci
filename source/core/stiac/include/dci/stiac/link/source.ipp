@@ -20,8 +20,8 @@ namespace dci::stiac::link
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Source& Source::operator>>(auto&& v)
     {
-        using stiac::serialization::load;
-        using stiac::link::serialization::load;
+        using ::dci::stiac::serialization::load;
+        using ::dci::stiac::link::serialization::load;
 
         load(*this, std::forward<decltype(v)>(v));
         return *this;
@@ -96,8 +96,8 @@ namespace dci::stiac::link
     template <class T>
     SourceZombie<T>& SourceZombie<T>::operator>>(auto&& v)
     {
-        using stiac::serialization::load;
-        using stiac::link::serialization::load;
+        using ::dci::stiac::serialization::load;
+        using ::dci::stiac::link::serialization::load;
 
         load(*this, std::forward<decltype(v)>(v));
         return *this;

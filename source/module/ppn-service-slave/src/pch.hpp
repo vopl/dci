@@ -10,20 +10,14 @@
 
 #pragma once
 
-#include "sink.hpp"
-#include "../serialization.hpp"
-#include "serialization.hpp"
+#include <dci/host.hpp>
+#include <dci/config.hpp>
+#include <dci/utils/h2b.hpp>
+#include "ppn/service/slave.hpp"
 
-namespace dci::stiac::link
+namespace dci::module::ppn::service
 {
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    inline Sink& Sink::operator<<(auto&& v)
-    {
-        using ::dci::stiac::serialization::save;
-        using ::dci::stiac::link::serialization::save;
-
-        save(*this, std::forward<decltype(v)>(v));
-        return *this;
-    }
-
+    using namespace dci;
+    namespace api = idl::gen::ppn::service::slave;
+    namespace link = idl::gen::ppn::node::link;
 }

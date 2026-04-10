@@ -11,7 +11,6 @@
 #pragma once
 
 #include <dci/primitives.hpp>
-#include "../introspection.hpp"
 
 namespace dci::idl::interface
 {
@@ -30,14 +29,4 @@ namespace dci::idl::interface
         case Side::opposite: return Side::primary;
         }
     }
-}
-
-namespace dci::idl::introspection
-{
-    template <> inline constexpr Kind kind<dci::idl::interface::Side> = Kind::enum_;
-    template <> inline constexpr uint32 fieldsCount<dci::idl::interface::Side> = 2;
-    template <> struct FieldType<dci::idl::interface::Side, 0> {using result = dci::idl::interface::Side; };
-    template <> struct FieldType<dci::idl::interface::Side, 1> {using result = dci::idl::interface::Side; };
-    template <> inline constexpr auto fieldValue<dci::idl::interface::Side, 0> = dci::idl::interface::Side::primary;
-    template <> inline constexpr auto fieldValue<dci::idl::interface::Side, 1> = dci::idl::interface::Side::opposite;
 }

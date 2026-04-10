@@ -35,7 +35,7 @@ namespace dci::aup::catalog
 
             OidMaker& operator<<(auto&& v)
             {
-                using stiac::serialization::save;
+                using ::dci::stiac::serialization::save;
 
                 save(*this, std::forward<decltype(v)>(v));
                 return *this;

@@ -12,6 +12,7 @@
 
 #include "../api.hpp"
 #include "../contract/lid.hpp"
+#include "../introspection.hpp"
 #include "side.hpp"
 
 namespace dci::idl::interface
@@ -54,6 +55,8 @@ namespace dci::idl::introspection
     template <> inline constexpr Kind kind<dci::idl::interface::Lid> = Kind::struct_;
     template <> inline constexpr uint32 basesCount<dci::idl::interface::Lid> = 0;
     template <> inline constexpr uint32 fieldsCount<dci::idl::interface::Lid> = 2;
+    template <> inline constexpr std::array fieldName<dci::idl::interface::Lid, 0> = std::to_array("_clid");
+    template <> inline constexpr std::array fieldName<dci::idl::interface::Lid, 1> = std::to_array("_side");
     template <> struct FieldType<dci::idl::interface::Lid, 0> {using result = dci::idl::contract::Lid; };
     template <> struct FieldType<dci::idl::interface::Lid, 1> {using result = dci::idl::interface::Side; };
     template <> inline constexpr auto fieldValue<dci::idl::interface::Lid, 0> = memberValue<dci::idl::interface::Lid, &dci::idl::interface::Lid::_clid>;
