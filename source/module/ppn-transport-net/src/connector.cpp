@@ -110,6 +110,8 @@ namespace dci::module::ppn::transport::net
                     {
                         idl::gen::net::stream::Channel<> netStreamChannel = netStreamChannelFuture.value();
                         netStreamChannel->setOption(idl::gen::net::option::NoDelay{true});
+                        netStreamChannel->setOption(idl::gen::net::option::Keepalive{true, 10, 5, 4}).value();
+                        netStreamChannel->setOption(idl::gen::net::option::UserTimeout{30*1000}).value();
 
                         if(!out.resolved())
                         {

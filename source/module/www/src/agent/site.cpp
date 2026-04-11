@@ -26,11 +26,24 @@ namespace dci::module::www::agent
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Site::~Site()
     {
-        _iosPending.clear();
-        _connectionsPending.clear();
-        _connectionsWorking.clear();
-        _connectionsFull.clear();
-        _connectionsShutdown.clear();
+        ExceptionPtr stopFail = exception::buildInstance<api::agent::Stopped>();
+        auto clear = [&](auto& container)
+        {
+            auto copy{std::move(container)};
+            for(const auto& e : copy)
+            {
+                e->setAgent({});
+                e->setSite({});
+                e->fail(stopFail);
+            }
+        };
+
+        clear(_iosPending);
+
+        clear(_connectionsPending);
+        clear(_connectionsWorking);
+        clear(_connectionsFull);
+        clear(_connectionsShutdown);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -40,28 +53,35 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::perform(Io* io)
+    void Site::perform(RCPtr<Io> io)
     {
         io->setSite(this);
-        _iosPending.push(io);
+        _iosPending.insert(std::move(io));
         flowLogicStep();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Site::fail(const ExceptionPtr& fail)
     {
-        _connectionsPending .each([&](Connection* connection) { connection->fail(fail); });
-        _connectionsWorking .each([&](Connection* connection) { connection->fail(fail); });
-        _connectionsFull    .each([&](Connection* connection) { connection->fail(fail); });
-        _connectionsShutdown.each([&](Connection* connection) { connection->fail(fail); });
+        auto callFail = [&](const auto& container)
+        {
+            auto copy{container};
+            for(const auto& e : copy)
+                e->fail(fail);
+        };
 
-        _iosPending.each([&](Io* io) { io->fail(fail); });
+        callFail(_connectionsPending);
+        callFail(_connectionsWorking);
+        callFail(_connectionsFull);
+        callFail(_connectionsShutdown);
+
+        callFail(_iosPending);
 
         _agent->siteDone(this);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::connectionChanged(Connection* connection)
+    void Site::connectionChanged(RCPtr<Connection> connection)
     {
         Connection::SiteData& siteData = connection->_siteData;
 
@@ -81,16 +101,16 @@ namespace dci::module::www::agent
         switch(siteData._state)
         {
         case connection::State::pending:
-            _connectionsPending.release(connection);
+            _connectionsPending.erase(connection);
             break;
         case connection::State::working:
-            _connectionsWorking.release(connection);
+            _connectionsWorking.erase(connection);
             break;
         case connection::State::full:
-            _connectionsFull.release(connection);
+            _connectionsFull.erase(connection);
             break;
         case connection::State::shutdown:
-            _connectionsShutdown.release(connection);
+            _connectionsShutdown.erase(connection);
             break;
         default:
             std::unreachable();
@@ -100,17 +120,17 @@ namespace dci::module::www::agent
         switch(siteData._state)
         {
         case connection::State::pending:
-            _connectionsPending.push(connection);
+            _connectionsPending.emplace(std::move(connection));
             break;
         case connection::State::working:
-            _connectionsWorking.push(connection);
+            _connectionsWorking.emplace(std::move(connection));
             flowLogicStep();
             break;
         case connection::State::full:
-            _connectionsFull.push(connection);
+            _connectionsFull.emplace(std::move(connection));
             break;
         case connection::State::shutdown:
-            _connectionsShutdown.push(connection);
+            _connectionsShutdown.emplace(std::move(connection));
             break;
         case connection::State::done:
         case connection::State::fail:
@@ -130,25 +150,31 @@ namespace dci::module::www::agent
                 }
                 else
                     _unusedConnectionIds.insert(connection->id());
+
+                ExceptionPtr fail;
+                if(connection::State::fail == siteData._state)
+                    fail = connection->fail();
+
+                connection.reset();
+                flowLogicStep();
+
+                break;
             }
 
-            delete connection;
-            flowLogicStep();
-            break;
         default:
             std::unreachable();
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::ioCancelled(Io* io)
+    void Site::ioCancelled(RCPtr<Io> io)
     {
         _iosPending.erase(io);
         flowLogicStep();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::ioFailed(Io* io)
+    void Site::ioFailed(RCPtr<Io> io)
     {
         _iosPending.erase(io);
         flowLogicStep();
@@ -168,17 +194,21 @@ namespace dci::module::www::agent
            _agent->_maxIoPerformingPerSite > _iosPerformingCount &&
            !_connectionsWorking.empty())
         {
-            Connection* connection = _connectionsWorking.first();
+            std::size_t _connectionsWorkingRoundRobin{};
 
-            {// round robin
-                _connectionsWorking.release(connection);
-                _connectionsWorking.push(connection);
+            if(++_connectionsWorkingRoundRobin >= _connectionsWorking.size())
+                _connectionsWorkingRoundRobin = 0;
+            RCPtr<Connection> connection = *(_connectionsWorking.begin() + _connectionsWorkingRoundRobin);
+
+            RCPtr<Io> io;
+            {
+                auto ioIter = _iosPending.end();
+                --ioIter;
+                io = *ioIter;
+                _iosPending.erase(ioIter);
             }
 
-            Io* io = _iosPending.first();
-            _iosPending.release(io);
-
-            connection->perform(io);
+            connection->perform(std::move(io));
 
             flowLogicStep();
             return;
@@ -194,9 +224,9 @@ namespace dci::module::www::agent
             return;
 
         std::size_t connectionsCount =
-                _connectionsPending.count() +
-                _connectionsWorking.count() +
-                _connectionsFull.count();
+                _connectionsPending.size() +
+                _connectionsWorking.size() +
+                _connectionsFull.size();
 
         if(_agent->_maxConnectionsPerSite <= connectionsCount)
             return;
@@ -227,7 +257,7 @@ namespace dci::module::www::agent
 
         }
 
-        _connectionsPending.push(new Connection(_agent, this, id));
+        _connectionsPending.emplace(RCPtr<Connection>(new Connection(_agent, this, id)));
         flowLogicStep();
         return;
     }

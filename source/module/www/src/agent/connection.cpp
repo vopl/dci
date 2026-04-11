@@ -62,22 +62,39 @@ namespace dci::module::www::agent
 
         cmt::spawn() += _tol * [this]
         {
+            auto holder{rcptr()};
+            if(!isWorkable())
+                return;
+
             auto onInvolvedChanged = [this](bool v)
             {
+                auto holder{rcptr()};
                 if(!v && !_fail)
                     fail(exception::buildInstance<api::agent::Stopped>());
             };
+
+            auto emergencyLogging = utils::AtScopeExit{[this]
+            {
+                if(_logStream)
+                    _logStream->content(String{"emergency stop"});
+            }};
 
             try
             {
                 // resolve
                 if(_logStream)
+                {
                     _logStream->content(String{"try to resolve "} + _site->endpoint()._host);
+                    if(!isWorkable())
+                        return;
+                }
 
                 List<net::IpEndpoint> ipCandidates;
                 try
                 {
                     ipCandidates = _agent->_netHost->resolveAllIp(_site->endpoint()._host).value();
+                    if(!isWorkable())
+                        return;
                 }
                 catch(...)
                 {
@@ -94,12 +111,18 @@ namespace dci::module::www::agent
                         ips += toString(ipCandidate);
                     }
                     _logStream->content("resolved: " + ips);
+                    if(!isWorkable())
+                        return;
                 }
 
                 if(ipCandidates.empty())
                 {
                     if(_logStream)
+                    {
                         _logStream->content(String{"no candidates to connect"});
+                        if(!isWorkable())
+                            return;
+                    }
                     throw api::agent::ResolveFailed{};
                 }
 
@@ -113,19 +136,33 @@ namespace dci::module::www::agent
                     {
                         lastConnectFail = std::current_exception();
                         if(_logStream)
+                        {
                             _logStream->content(prefix + " " + toString(ipCandidate) + " failed: " + exception::toString(lastConnectFail));
+                            if(!isWorkable())
+                                return;
+                        }
                     };
 
                     try
                     {
                         if(_logStream)
+                        {
                             _logStream->content(String{"try to connect "} + toString(ipCandidate));
+                            if(!isWorkable())
+                                return;
+                        }
 
                         _netChannel = _agent->_netStreamClient->connect(ipCandidate.visit([&](auto&&v){return net::Endpoint{std::move(v)};})).value();
+                        if(!isWorkable())
+                            return;
 
                         _netChannel.involvedChanged() += _sol * onInvolvedChanged;
                         if(_logStream)
+                        {
                             _logStream->content("connected " + toString(ipCandidate));
+                            if(!isWorkable())
+                                return;
+                        }
                     }
                     catch(const cmt::task::Stop&)
                     {
@@ -141,7 +178,11 @@ namespace dci::module::www::agent
                     try
                     {
                         _netChannel->setOption(net::option::Keepalive{true, 10, 5, 4}).value();
+                        if(!isWorkable())
+                            return;
                         _netChannel->setOption(net::option::UserTimeout{30*1000}).value();
+                        if(!isWorkable())
+                            return;
                     }
                     catch(const cmt::task::Stop&)
                     {
@@ -152,8 +193,14 @@ namespace dci::module::www::agent
                     {
                         processCurrentException("setup socket for");
                         _netChannel->shutdown(true, true);
+                        if(!isWorkable())
+                            return;
                         _netChannel->close();
+                        if(!isWorkable())
+                            return;
                         _netChannel.reset();
+                        if(!isWorkable())
+                            return;
                         continue;
                     }
 
@@ -163,7 +210,11 @@ namespace dci::module::www::agent
                 if(!_netChannel)
                 {
                     if(_logStream)
+                    {
                         _logStream->content(String{"no more candidates to connect"});
+                        if(!isWorkable())
+                            return;
+                    }
 
                     std::rethrow_exception(exception::buildInstance<api::agent::ConnectFailed>(lastConnectFail));
                 }
@@ -173,6 +224,9 @@ namespace dci::module::www::agent
                 {
                     api::stream::Channel<>::Opposite remote;
                     std::tie(local, remote) = _agent->makeHookChannelsNet(_sol);
+                    if(!isWorkable())
+                        return;
+
                     dbgAssert(!local == !remote);
                     if(!local)
                     {
@@ -186,12 +240,15 @@ namespace dci::module::www::agent
 
                     _netChannel->failed() += _sol * [this, remote](auto&& error)
                     {
+                        auto holder{rcptr()};
+
                         if(_tlsChannel)
                             remote->failed(std::forward<decltype(error)>(error));
                         else
                         {
                             auto next = [this, error=std::forward<decltype(error)>(error)]
                             {
+                                auto holder{rcptr()};
                                 fail(exception::buildInstance<api::agent::NetChannelFailed>(error));
                             };
 
@@ -203,17 +260,27 @@ namespace dci::module::www::agent
                     };
                     _netChannel->closed() += _sol * [this, remote]()
                     {
+                        auto holder{rcptr()};
+
                         if(_logStream)
+                        {
                             _logStream->content("net closed");
+                            if(!isWorkable())
+                                return;
+                        }
 
                         if(_tlsChannel)
+                        {
                             remote->closed();
+                            if(!isWorkable())
+                                return;
+                        }
                         else
                         {
                             auto next = [this]
                             {
+                                auto holder{rcptr()};
                                 close();
-                                _site->connectionChanged(this);
                             };
 
                             if(connection::State::pending == _state)
@@ -225,26 +292,31 @@ namespace dci::module::www::agent
 
                     remote->close() += _sol * [this]()
                     {
+                        auto holder{rcptr()};
                         _netChannel->close();
                     };
 
                     remote->send() += _sol * [this](auto&& data)
                     {
+                        auto holder{rcptr()};
                         _netChannel->send(std::forward<decltype(data)>(data));
                     };
 
                     remote->startReceive() += _sol * [this]()
                     {
+                        auto holder{rcptr()};
                         _netChannel->startReceive();
                     };
 
                     remote->stopReceive() += _sol * [this]()
                     {
+                        auto holder{rcptr()};
                         _netChannel->stopReceive();
                     };
 
                     remote->shutdown() += _sol * [this]()
                     {
+                        auto holder{rcptr()};
                         _netChannel->shutdown(true, true);
                     };
                 }
@@ -256,7 +328,11 @@ namespace dci::module::www::agent
                     try
                     {
                         _tlsChannel = _agent->_wwwTls->client(std::move(local), Opt<String>{_site->_endpoint._host}).value();
+                        if(!isWorkable())
+                            return;
                         alpnProtoSelected = _tlsChannel->alpnProtoSelected().value();
+                        if(!isWorkable())
+                            return;
                     }
                     catch(...)
                     {
@@ -265,18 +341,23 @@ namespace dci::module::www::agent
 
                     _tlsChannel.involvedChanged() += _sol * onInvolvedChanged;
                     if(_logStream)
+                    {
                         _logStream->content("secured" + (alpnProtoSelected.empty() ? String{} : " for " + alpnProtoSelected));
+                        if(!isWorkable())
+                            return;
+                    }
                     local = _tlsChannel;
 
                     _tlsChannel->failed() += _sol * [this](auto&& error)
                     {
+                        auto holder{rcptr()};
                         fail(exception::buildInstance<api::agent::TlsChannelFailed>(std::forward<decltype(error)>(error)));
                     };
 
                     _tlsChannel->closed() += _sol * [this]()
                     {
+                        auto holder{rcptr()};
                         close();
-                        _site->connectionChanged(this);
                     };
                 }
 
@@ -290,6 +371,8 @@ namespace dci::module::www::agent
                 try
                 {
                     _httpChannel = _agent->_wwwFactory->stream2HttpClient(std::move(local)).value();
+                    if(!isWorkable())
+                        return;
                 }
                 catch(...)
                 {
@@ -298,28 +381,49 @@ namespace dci::module::www::agent
 
                 _httpChannel.involvedChanged() += _sol * onInvolvedChanged;
                 if(_logStream)
+                {
                     _logStream->content("http ready");
+                    if(!isWorkable())
+                        return;
+                }
 
                 _httpChannel->failed() += _sol * [this](auto&& error)
                 {
+                    auto holder{rcptr()};
                     fail(exception::buildInstance<api::agent::HttpFailed>(std::forward<decltype(error)>(error)));
                 };
 
                 dbgAssert(connection::State::pending == _state);
                 _state = connection::State::working;
-                _site->connectionChanged(this);
+                if(_site)
+                    _site->connectionChanged(holder);
             }
             catch(...)
             {
                 fail(std::current_exception());
             }
+            emergencyLogging.release();
         };
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Connection::~Connection()
     {
-        close();
+        close(false);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Connection::setAgent(Agent* agent)
+    {
+        dbgAssert(!agent);
+        _agent = agent;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Connection::setSite(Site* site)
+    {
+        dbgAssert(!site);
+        _site = site;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -337,12 +441,14 @@ namespace dci::module::www::agent
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::size_t Connection::iosPerformingCount() const
     {
-        return _iosPerforming.count();
+        return _iosPerforming.size();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::perform(Io* io)
+    void Connection::perform(RCPtr<Io> io)
     {
+        auto holder{rcptr()};
+
         switch(_state)
         {
         case connection::State::working:
@@ -350,18 +456,23 @@ namespace dci::module::www::agent
             break;
         case connection::State::pending:
         case connection::State::shutdown:
-        case connection::State::fail:
         case connection::State::done:
             dbgAssert(false);
-            delete io;
+        case connection::State::fail:
+            if(_fail)
+                io->fail(_fail);
+            else
+                io->fail(exception::buildInstance<api::agent::Error>());
             return;
         }
 
         dbgAssert(_httpChannel);
         dbgAssert(!_fail);
 
-        _iosPerforming.push(io);
+        _iosPerforming.insert(io);
         io->setConnection(this);
+        if(!isWorkable())
+            return;
 
         if(iosPerformingCount() >= _agent->_maxIoPerformingPerConection)
             _state = connection::State::full;
@@ -370,12 +481,15 @@ namespace dci::module::www::agent
 
         io->perform(_httpChannel);
 
-        _site->connectionChanged(this);
+        if(_site)
+            _site->connectionChanged(holder);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Connection::fail(const ExceptionPtr& fail)
     {
+        auto holder{rcptr()};
+
         switch(_state)
         {
         case connection::State::pending:
@@ -393,13 +507,20 @@ namespace dci::module::www::agent
         if(!_fail)
             _fail = fail;
 
-        if(_logStream)
-            _logStream->content(String{"fail: "} + exception::toString(_fail));
+        {
+            auto iosPerforming{_iosPerforming};
+            for(const RCPtr<Io>& io : iosPerforming)
+                io->fail(fail);
+        }
 
-        _iosPerforming.each([this](Io* io){ io->fail(_fail); });
+        if(_logStream)
+        {
+            _logStream->content(String{"fail: "} + exception::toString(_fail));
+            if(!isWorkable())
+                return;
+        }
 
         close();
-        _site->connectionChanged(this);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -409,23 +530,29 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioCancelled(Io* io)
+    void Connection::ioCancelled(RCPtr<Io> io)
     {
-        ioDone(io);
+        ioDone(std::move(io));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioFailed(Io* io)
+    void Connection::ioFailed(RCPtr<Io> io)
     {
-        ioDone(io);
+        ioDone(std::move(io));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioDone(Io* io)
+    void Connection::ioDone(RCPtr<Io> io)
     {
+        auto holder{rcptr()};
+
         dbgAssert(io->started());
         dbgAssert(_iosPerforming.contains(io));
+        io->setConnection({});
         _iosPerforming.erase(io);
+        io.reset();
+        if(!isWorkable())
+            return;
 
         switch(_state)
         {
@@ -436,7 +563,8 @@ namespace dci::module::www::agent
         case connection::State::pending:
         case connection::State::shutdown:
             dbgAssert(false);
-            _site->connectionChanged(this);
+            if(_site)
+                _site->connectionChanged(holder);
             break;
         case connection::State::fail:
         case connection::State::done:
@@ -445,11 +573,17 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioWantClose(Io* io)
+    void Connection::ioWantClose(RCPtr<Io> io)
     {
+        auto holder{rcptr()};
+
         dbgAssert(io->started());
         dbgAssert(_iosPerforming.contains(io));
+        io->setConnection({});
         _iosPerforming.erase(io);
+        io.reset();
+        if(!isWorkable())
+            return;
 
         switch(_state)
         {
@@ -462,12 +596,12 @@ namespace dci::module::www::agent
             }
             else
                 close();
-            _site->connectionChanged(this);
             return;
         case connection::State::pending:
         case connection::State::shutdown:
             dbgAssert(false);
-            _site->connectionChanged(this);
+            if(_site)
+                _site->connectionChanged(holder);
             break;
         case connection::State::fail:
         case connection::State::done:
@@ -482,8 +616,10 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::idleLogic(bool forceChangedNotification4Site)
+    void Connection::idleLogic(bool notifySite)
     {
+        auto holder{rcptr()};
+
         bool isIdle{};
         switch(_state)
         {
@@ -521,9 +657,13 @@ namespace dci::module::www::agent
             else
             {
                 if(_logStream)
+                {
                     _logStream->content("idle timeout");
+                    if(!isWorkable())
+                        return;
+                }
+
                 close();
-                _site->connectionChanged(this);
                 return;
             }
         }
@@ -536,13 +676,17 @@ namespace dci::module::www::agent
             }
         }
 
-        if(forceChangedNotification4Site)
-            _site->connectionChanged(this);
+        if(notifySite && _site)
+            _site->connectionChanged(holder);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::close()
+    void Connection::close(bool notifySite)
     {
+        Opt<RCPtr<Connection>> holderOpt;
+        if(notifySite)
+            holderOpt = rcptr();
+
         switch(_state)
         {
         case connection::State::pending:
@@ -578,7 +722,11 @@ namespace dci::module::www::agent
             _netChannel.reset();
         }
 
-        _iosPerforming.clear();
+        {
+            auto iosPerforming{std::move(_iosPerforming).extract()};
+            for(const RCPtr<Io>& io : iosPerforming)
+                io->setConnection({});
+        }
 
         _tol.flush();
 
@@ -587,5 +735,27 @@ namespace dci::module::www::agent
             _logStream->done();
             _logStream.reset();
         }
+
+        if(_site && holderOpt)
+            _site->connectionChanged(*holderOpt);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    bool Connection::isWorkable() const
+    {
+        if(!_site || !_agent)
+            return false;
+
+        switch(_state)
+        {
+        case connection::State::shutdown:
+        case connection::State::fail:
+        case connection::State::done:
+            return false;
+        default:
+            break;
+        }
+
+        return !_fail;
     }
 }

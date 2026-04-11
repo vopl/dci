@@ -14,32 +14,25 @@
 
 namespace dci::module::www
 {
+    using namespace agent;
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class I>
     cmt::Future<I> Agent::getDependency()
     {
         return cmt::spawnv<I>() += _tol * [this]
         {
-            Set<api::agent::DependenciesFactory<>::Opposite> probed;
-
-            for(;;)
+            for(const api::agent::DependenciesFactory<>::Opposite& dependenciesFactory : _dependenciesFactories)
             {
-                for(const api::agent::DependenciesFactory<>::Opposite& dependenciesFactory : _dependenciesFactories)
+                try
                 {
-                    if(!probed.emplace(dependenciesFactory).second)
-                        continue;
-
-                    try
-                    {
-                        I res = *dependenciesFactory->activated(I::lid());
-                        if(res)
-                            return res;
-                    }
-                    catch(...)
-                    {
-                        LOGW("dependenciesFactory activation failed for " << I::lid().toIidText() << ": " << exception::toString(std::current_exception()));
-                    }
-                    break;
+                    I res = *dependenciesFactory->activated(I::lid());
+                    if(res)
+                        return res;
+                }
+                catch(...)
+                {
+                    LOGW("dependenciesFactory activation failed for " << I::lid().toIidText() << ": " << exception::toString(std::current_exception()));
                 }
             }
 
@@ -89,18 +82,24 @@ namespace dci::module::www
             {
                 if(in.resolvedException())
                 {
-                    _fail = exception::buildInstance<api::agent::HostFailed>(in.detachException());
+                    _fail = exception::buildInstance<api::agent::DepsFailed>(in.detachException());
                     out.resolveException(in.detachException());
                 }
                 else if(in.resolvedCancel())
                 {
-                    _fail = exception::buildInstance<api::agent::HostFailed>(in.detachException());
+                    _fail = exception::buildInstance<api::agent::DepsFailed>(in.detachException());
                     out.resolveCancel();
                 }
                 else //if(in.resolvedValue())
                 {
                     dbgAssert(in.resolvedValue());
                     _cookies = in.detachValue();
+                    _cookies.involvedChanged() += serviceSol() * [this](bool v)
+                    {
+                        if(!v && !_fail)
+                            fail(exception::buildInstance<api::agent::DepsFailed>());
+                    };
+
                     out.resolveValue(_cookies);
                 }
             };
@@ -115,11 +114,18 @@ namespace dci::module::www
             getDependency<api::http::client::Cookies<>>().then() += serviceSol() * [this](cmt::Future<api::http::client::Cookies<>> in)
             {
                 if(in.resolvedException())
-                    _fail = exception::buildInstance<api::agent::HostFailed>(in.detachException());
+                    _fail = exception::buildInstance<api::agent::DepsFailed>(in.detachException());
                 else if(in.resolvedCancel())
-                    _fail = exception::buildInstance<api::agent::HostFailed>(in.detachException());
+                    _fail = exception::buildInstance<api::agent::DepsFailed>(in.detachException());
                 else //if(in.resolvedValue())
+                {
                     _cookies = in.detachValue();
+                    _cookies.involvedChanged() += serviceSol() * [this](bool v)
+                    {
+                        if(!v && !_fail)
+                            fail(exception::buildInstance<api::agent::DepsFailed>());
+                    };
+                }
             };
         };
 
@@ -194,7 +200,7 @@ namespace dci::module::www
                 auto onInvolvedChanged = [this](bool v)
                 {
                     if(!v && !_fail)
-                        fail(exception::buildInstance<api::agent::Stopped>());
+                        fail(exception::buildInstance<api::agent::DepsFailed>());
                 };
 
                 _netHost.involvedChanged() += serviceSol() * onInvolvedChanged;
@@ -205,12 +211,14 @@ namespace dci::module::www
                 _ready = true;
 
                 dbgAssert(_staff.holds<Ios>());
-                Ios ios{std::move(_staff.get<Ios>())};
+                auto ios{std::move(_staff.get<Ios>()).extract()};
                 _staff.emplace<Sites>();
-                ios.release([this](agent::Io* io)
-                {
-                    io2Site(io);
-                });
+                for(RCPtr<Io>& io : ios)
+                    io2Site(std::move(io));
+            }
+            catch(const api::agent::Error&)
+            {
+                fail(std::current_exception());
             }
             catch(...)
             {
@@ -226,6 +234,7 @@ namespace dci::module::www
 
         _staff.sget<Ios>().clear();
 
+        _dependenciesFactories.clear();
         _netHost.reset();
         _netStreamClient.reset();
         _wwwFactory.reset();
@@ -261,16 +270,13 @@ namespace dci::module::www
             return cmt::readyFuture<api::agent::io::Response>(exception::buildInstance<api::agent::BadMethod>());
         }
 
-        agent::Io* io = new agent::Io{_cookies, std::move(request)};
+        RCPtr<Io> io{new Io{this, _cookies, std::move(request)}};
         cmt::Future<api::agent::io::Response> future = io->future();
 
         if(_staff.holds<Ios>())
-        {
-            io->setAgent(this);
-            _staff.get<Ios>().push(io);
-        }
+            _staff.get<Ios>().insert(std::move(io));
         else
-            io2Site(io);
+            io2Site(std::move(io));
 
         return future;
     }
@@ -282,7 +288,7 @@ namespace dci::module::www
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::siteDone(agent::Site* site)
+    void Agent::siteDone(Site* site)
     {
         dbgAssert(_staff.holds<Sites>());
         Sites& sites = _staff.get<Sites>();
@@ -291,63 +297,57 @@ namespace dci::module::www
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::ioCancelled(agent::Io* io)
+    void Agent::ioCancelled(RCPtr<Io> io)
     {
-        dbgAssert(_staff.holds<Ios>());
-        dbgAssert(_staff.get<Ios>().contains(io));
-
-        _staff.get<Ios>().erase(io);
+        if(_staff.holds<Ios>())
+            _staff.get<Ios>().erase(io);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::ioFailed(agent::Io* io)
+    void Agent::ioFailed(RCPtr<Io> io)
     {
-        dbgAssert(_staff.holds<Ios>());
-        dbgAssert(_staff.get<Ios>().contains(io));
-
-        _staff.get<Ios>().erase(io);
+        if(_staff.holds<Ios>())
+            _staff.get<Ios>().erase(io);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Agent::fail(ExceptionPtr&& cause)
     {
         if(!_fail)
-            _fail = exception::buildInstance<api::agent::HostFailed>(std::move(cause));
+            _fail = std::move(cause);
 
         if(_staff.holds<Ios>())
-            _staff.get<Ios>().erase([this](agent::Io* io){ io->fail(_fail); });
+        {
+            auto ios = std::move(_staff.get<Ios>()).extract();
+            for(RCPtr<Io>& io : ios)
+                std::exchange(io, RCPtr<Io>{})->fail(_fail);
+        }
         else
         {
             Sites& sites = _staff.get<Sites>();
             while(!sites.empty())
-                const_cast<agent::Site&>(*sites.begin()).fail(_fail);
+                const_cast<Site&>(*sites.begin()).fail(_fail);
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::io2Site(agent::Io* io)
+    void Agent::io2Site(RCPtr<Io> io)
     {
         dbgAssert(_staff.holds<Sites>());
 
         if(io->done())
-        {
-            delete io;
             return;
-        }
 
-        std::expected<agent::site::Endpoint, ExceptionPtr> siteEndpoint = io->calculateSiteEndpoint();
+        std::expected<site::Endpoint, ExceptionPtr> siteEndpoint = io->calculateSiteEndpoint();
         if(!siteEndpoint.has_value())
-        {
-            delete io;
             return;
-        }
 
         Sites& sites = _staff.get<Sites>();
         auto iter = sites.lower_bound(siteEndpoint.value());
         if(sites.end() == iter || siteEndpoint.value() != iter->endpoint())
             iter = sites.emplace_hint(iter, this, std::move(siteEndpoint.value()));
-        agent::Site& site = const_cast<agent::Site&>(*iter);
-        site.perform(io);
+        Site& site = const_cast<Site&>(*iter);
+        site.perform(std::move(io));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -428,5 +428,4 @@ namespace dci::module::www
             remote->received(std::forward<decltype(data)>(data));
         };
     }
-
 }

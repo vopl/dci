@@ -28,6 +28,7 @@ scope www
         exception BadUriHost        : Error {}
         exception BadUriPort        : Error {}
 
+        exception DepsFailed        : Error {}
         exception HostFailed        : Error {}
         exception ResolveFailed     : Error {}
         exception ConnectFailed     : Error {}

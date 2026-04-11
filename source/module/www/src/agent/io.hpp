@@ -12,6 +12,8 @@
 
 #include "pch.hpp"
 #include "site/endpoint.hpp"
+#include "refCounted.hpp"
+#include "rcptr.hpp"
 
 namespace dci::module::www
 {
@@ -24,11 +26,11 @@ namespace dci::module::www::agent
     class Connection;
 
     class Io
-        : public dci::utils::IntrusiveDlistElement<Io>
-        , public mm::heap::Allocable<Io>
+        : public mm::heap::Allocable<Io>
+        , public RefCounted<Io>
     {
     public:
-        Io(const api::http::client::Cookies<>& cookies, api::agent::io::Request&& request);
+        Io(Agent* agent, const api::http::client::Cookies<>& cookies, api::agent::io::Request&& request);
         ~Io();
 
         cmt::Future<api::agent::io::Response> future();
@@ -50,6 +52,9 @@ namespace dci::module::www::agent
 
         void onResponseDone();
 
+        bool isOrphan() const;
+
+
     private:
         sbs::Owner                              _sol;
         cmt::task::Owner                        _tol;
@@ -61,15 +66,11 @@ namespace dci::module::www::agent
         api::agent::io::Request                 _request;
         dci::utils::uri::WWW<std::string_view>  _uriParsed;
 
-        cmt::Promise<api::agent::io::Response> _responsePromise;
+        cmt::Promise<api::agent::io::Response>  _responsePromise;
         api::agent::io::Response                _responseAccumuler;
 
     private:
         bool                                    _started{};
         api::http::client::Response<>           _httpResponse;
-
-    private:
-        using AliveMarker = std::shared_ptr<bool>;
-        AliveMarker _aliveMarker{std::make_shared<bool>(true)};
     };
 }

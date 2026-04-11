@@ -11,7 +11,8 @@
 #pragma once
 
 #include "pch.hpp"
-#include "owningDList.hpp"
+#include "rcptr.hpp"
+#include "refCounted.hpp"
 
 namespace dci::module::www
 {
@@ -37,8 +38,8 @@ namespace dci::module::www::agent
     class Io;
 
     class Connection
-        : public utils::IntrusiveDlistElement<Connection>
-        , public mm::heap::Allocable<Connection>
+        : public mm::heap::Allocable<Connection>
+        , public RefCounted<Connection>
     {
     public:
         struct SiteData
@@ -51,24 +52,29 @@ namespace dci::module::www::agent
         Connection(Agent* agent, Site* site, uint32 id);
         ~Connection();
 
+        void setAgent(Agent* agent);
+        void setSite(Site* site);
+
         uint32 id() const;
         connection::State state() const;
 
         std::size_t iosPerformingCount() const;
-        void perform(Io* io);
+        void perform(RCPtr<Io> io);
         void fail(const ExceptionPtr& fail);
         const ExceptionPtr& fail() const;
 
-        void ioCancelled(Io* io);
-        void ioFailed(Io* io);
-        void ioDone(Io* io);
-        void ioWantClose(Io* io);
+        void ioCancelled(RCPtr<Io> io);
+        void ioFailed(RCPtr<Io> io);
+        void ioDone(RCPtr<Io> io);
+        void ioWantClose(RCPtr<Io> io);
 
         const api::agent::log::Stream<>::Opposite& logStream();
 
     private:
-        void idleLogic(bool forceChangedNotification4Site);
-        void close();
+        void idleLogic(bool notifySite);
+        void close(bool notifySite = true);
+
+        bool isWorkable() const;
 
     private:
         sbs::Owner                                  _sol;
@@ -80,7 +86,7 @@ namespace dci::module::www::agent
 
         api::agent::log::Stream<>::Opposite         _logStream;
 
-        OwningDList<Io>                             _iosPerforming;
+        std::flat_set<RCPtr<Io>>                    _iosPerforming;
 
         net::stream::Channel<>                      _netChannel;
         api::tls::client::Channel<>                 _tlsChannel;

@@ -14,32 +14,33 @@
 #include "connection.hpp"
 #include "site.hpp"
 #include "../agent.hpp"
+#include "../enumSupport.hpp"
+#include "rcptr.hpp"
 
 namespace dci::module::www::agent
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Io::Io(const api::http::client::Cookies<>& cookies, api::agent::io::Request&& request)
-        : _cookies{cookies}
+    Io::Io(Agent* agent, const api::http::client::Cookies<>& cookies, api::agent::io::Request&& request)
+        : _agent{agent}
+        , _cookies{cookies}
         , _request{std::move(request)}
     {
         _responsePromise.canceled() += _sol * [this]
         {
+            auto holder{rcptr()};
+
             if(_connection)
-                _connection->ioCancelled(this);
+                _connection->ioCancelled(rcptr());
             else if(_site)
-                _site->ioCancelled(this);
-            else
-            {
-                dbgAssert(_agent);
-                _agent->ioCancelled(this);
-            }
+                _site->ioCancelled(rcptr());
+            else if(_agent)
+                _agent->ioCancelled(rcptr());
         };
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Io::~Io()
     {
-        *_aliveMarker = false;
         _sol.flush();
         _tol.flush();
         if(!_responsePromise.resolved())
@@ -61,9 +62,8 @@ namespace dci::module::www::agent
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Io::fail(const ExceptionPtr& fail)
     {
-        log([&]{ return exception::toString(fail); });
+        log([&]{ return "io failed: " + exception::toString(fail); });
 
-        *_aliveMarker = false;
         _sol.flush();
         _tol.flush();
         _httpResponse.reset();
@@ -72,14 +72,11 @@ namespace dci::module::www::agent
             _responsePromise.resolveException(std::move(fail));
 
             if(_connection)
-                _connection->ioFailed(this);
+                _connection->ioFailed(rcptr());
             else if(_site)
-                _site->ioFailed(this);
-            else
-            {
-                dbgAssert(_agent);
-                _agent->ioFailed(this);
-            }
+                _site->ioFailed(rcptr());
+            else if(_agent)
+                _agent->ioFailed(rcptr());
         }
     }
 
@@ -174,45 +171,22 @@ namespace dci::module::www::agent
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Io::setAgent(Agent* agent)
     {
+        dbgAssert(!_agent == !!agent);
         _agent = agent;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Io::setSite(Site* site)
     {
+        dbgAssert(!_site == !!site);
         _site = site;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Io::setConnection(Connection* connection)
     {
+        dbgAssert(!_connection == !!connection);
         _connection = connection;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    namespace
-    {
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        template <class E, uint32 index>
-        requires (idl::introspection::isEnum<E> && index < idl::introspection::fieldsCount<E>)
-        consteval std::string_view enumValueString()
-        {
-            constexpr auto& arr = idl::introspection::fieldName<E, index>;
-            return {arr.begin(), arr.end()-1};
-        }
-
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        template <class E>
-        requires idl::introspection::isEnum<E>
-        std::string_view enumValueString(E v)
-        {
-            return [v]<auto... index>(utils::ct::VList<index...>)
-            {
-                std::string_view res;
-                ((( idl::introspection::fieldValue<E, index> == v) ? (res = enumValueString<E, index>()),0 : 0), ...);
-                return res;
-            }(utils::ct::MakeSeq<idl::introspection::fieldsCount<E>>{});
-        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -231,10 +205,15 @@ namespace dci::module::www::agent
         _httpResponse.init();
 
         {
-            _httpResponse->firstLine() += _sol * [this, aliveMarker=_aliveMarker](api::http::firstLine::Version version, api::http::firstLine::StatusCode statusCode, primitives::String&& statusText)
+            _httpResponse->firstLine() += _sol * [this](api::http::firstLine::Version version, api::http::firstLine::StatusCode statusCode, primitives::String&& statusText)
             {
-                log([&]{ return "! " + std::string{enumValueString(version)} + " " + std::to_string(statusCode) + " " + statusText; });
-                if(!*aliveMarker)
+                auto holder{rcptr()};
+
+                if(isOrphan())
+                    return;
+
+                log([&]{ return "! " + std::string{enumSupport::toString(version).value_or("?")} + " " + std::to_string(statusCode) + " " + statusText; });
+                if(isOrphan())
                     return;
 
                 _responseAccumuler.version = version;
@@ -242,93 +221,135 @@ namespace dci::module::www::agent
                 _responseAccumuler.statusText = std::move(statusText);
             };
 
-            _httpResponse->headers() += _sol * [this, aliveMarker=_aliveMarker](primitives::List<api::http::Header>&& headers, bool done)
+            _httpResponse->headers() += _sol * [this](primitives::List<api::http::Header>&& headers, bool done)
             {
+                auto holder{rcptr()};
+
+                if(isOrphan())
+                    return;
+
                 logHeaders(headers, done, "!");
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
 
                 _responseAccumuler.headers.insert(_responseAccumuler.headers.end(), std::move_iterator{headers.begin()}, std::move_iterator{headers.end()});
             };
 
-            _httpResponse->data() += _sol * [this, aliveMarker=_aliveMarker](Bytes&& data, bool done)
+            _httpResponse->data() += _sol * [this](Bytes&& data, bool done)
             {
+                auto holder{rcptr()};
+
+                if(isOrphan())
+                    return;
+
                 logData(data, done, "!");
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
 
                 _responseAccumuler.data.end().write(std::move(data));
             };
 
-            _httpResponse->done() += _sol * [this, aliveMarker=_aliveMarker]()
+            _httpResponse->done() += _sol * [this]()
             {
+                auto holder{rcptr()};
+
+                if(isOrphan())
+                    return;
+
                 log([&]{ return "! done"; });
+                if(isOrphan())
+                    return;
+
                 onResponseDone();
             };
 
-            _httpResponse->failed() += _sol * [this, aliveMarker=_aliveMarker](ExceptionPtr e)
+            _httpResponse->failed() += _sol * [this](ExceptionPtr e)
             {
-                log([&]{ return "! failed: " + exception::toString(e); });
-                if(!*aliveMarker)
+                auto holder{rcptr()};
+
+                if(isOrphan())
                     return;
 
                 fail(exception::buildInstance<api::agent::HttpFailed>(e));
             };
 
-            _httpResponse->closed() += _sol * [this, aliveMarker=_aliveMarker]()
+            _httpResponse->closed() += _sol * [this]()
             {
+                auto holder{rcptr()};
+
+                if(isOrphan())
+                    return;
+
                 log([&]{ return "! closed"; });
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
 
                 if(!_responsePromise.resolved())
+                {
                     _responsePromise.resolveException(exception::buildInstance<api::agent::HttpClosed>());
-                dbgAssert(_connection);
-                _connection->ioWantClose(this);
+                    if(isOrphan())
+                        return;
+                }
+
+                _connection->ioWantClose(rcptr());
             };
 
-            httpRequest->failed() += _sol * [this, aliveMarker=_aliveMarker](ExceptionPtr e)
+            httpRequest->failed() += _sol * [this](ExceptionPtr e)
             {
-                log([&]{ return "? failed: " + exception::toString(e); });
-                if(!*aliveMarker)
+                auto holder{rcptr()};
+
+                if(isOrphan())
                     return;
 
                 fail(exception::buildInstance<api::agent::HttpFailed>(e));
             };
 
-            httpRequest->closed() += _sol * [this, aliveMarker=_aliveMarker]()
+            httpRequest->closed() += _sol * [this]()
             {
+                auto holder{rcptr()};
+
+                if(isOrphan())
+                    return;
                 log([&]{ return "? closed"; });
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
 
                 if(!_responsePromise.resolved())
+                {
                     _responsePromise.resolveException(exception::buildInstance<api::agent::HttpClosed>());
-                dbgAssert(_connection);
-                _connection->ioWantClose(this);
+                    if(isOrphan())
+                        return;
+                }
+
+                _connection->ioWantClose(rcptr());
             };
         }
 
-        AliveMarker aliveMarker{_aliveMarker};
         httpChannel->io(httpRequest.opposite(), _httpResponse.opposite());
-        if(!*aliveMarker)
-            return;
-
         if(_responsePromise.resolved())
+            return;
+        if(isOrphan())
             return;
 
         _httpResponse->setupDataProcessing(
                     api::http::message::tunable::Compression::byHeaders,
                     api::http::message::tunable::Compression::byHeaders,
                     api::http::message::tunable::Encoding::byHeaders);
-
-        if(!*aliveMarker)
+        if(isOrphan())
             return;
+
         if(_responsePromise.resolved())
             return;
+        if(isOrphan())
+            return;
 
-        cmt::spawn() += _tol * [this, httpRequest=std::move(httpRequest), aliveMarker=std::move(aliveMarker)]()
+        cmt::spawn() += _tol * [this, httpRequest=std::move(httpRequest)]()
         {
+            auto holder{rcptr()};
+
+            if(isOrphan())
+                return;
+
             bool withBody{};
             switch(_request.method)
             {
@@ -353,7 +374,7 @@ namespace dci::module::www::agent
                             api::http::message::tunable::Compression::none,
                             api::http::message::tunable::Compression::br,
                             api::http::message::tunable::Encoding::chunked);
-                    if(!*aliveMarker)
+                    if(isOrphan())
                         return;
                 }
             }
@@ -371,13 +392,11 @@ namespace dci::module::www::agent
                 }
 
                 api::http::firstLine::Version httpVersion = api::http::firstLine::Version::HTTP_1_1;
-
-                log([&]{ return "? " + std::string{enumValueString(_request.method)} + " " + uri4Request + " " + std::string{enumValueString(httpVersion)}; });
-                if(!*aliveMarker)
+                log([&]{ return "? " + std::string{enumSupport::toString(_request.method).value_or("?")} + " " + uri4Request + " " + std::string{enumSupport::toString(httpVersion).value_or("?")}; });
+                if(isOrphan())
                     return;
-
                 httpRequest->firstLine(_request.method, std::move(uri4Request), httpVersion);
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
             }
 
@@ -404,6 +423,8 @@ namespace dci::module::www::agent
                     try
                     {
                         cookies = _cookies->toRequest(siteEndpoint._host, _uriParsed._path, siteEndpoint._secure, isHttp).value();
+                        if(isOrphan())
+                            return;
                     }
                     catch(const cmt::task::Stop&)
                     {
@@ -421,21 +442,19 @@ namespace dci::module::www::agent
 
                 bool hasExtraHeaders = !_request.headers.empty();
                 logHeaders(headers, !hasExtraHeaders, "?");
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
-
                 httpRequest->headers(std::move(headers), !hasExtraHeaders);
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
 
                 if(hasExtraHeaders)
                 {
                     logHeaders(_request.headers, true, "?");
-                    if(!*aliveMarker)
+                    if(isOrphan())
                         return;
-
                     httpRequest->headers(std::move(_request.headers), true);
-                    if(!*aliveMarker)
+                    if(isOrphan())
                         return;
                 }
             }
@@ -443,21 +462,17 @@ namespace dci::module::www::agent
             if(withBody)
             {
                 logData(_request.body, true, "?");
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
-
                 httpRequest->data(std::move(_request.body), true);
-                if(!*aliveMarker)
+                if(isOrphan())
                     return;
             }
 
             log([&]{ return "? done"; });
-            if(!*aliveMarker)
+            if(isOrphan())
                 return;
-
             httpRequest->done();
-            if(!*aliveMarker)
-                return;
         };
     }
 
@@ -483,7 +498,7 @@ namespace dci::module::www::agent
             header.key.visit([&](const auto& k)
             {
                 if constexpr(!std::is_same_v<const String&, decltype(k)>)
-                    log([&]{ return prefix + " " + std::string{enumValueString(k)} + ": " + header.value; });
+                    log([&]{ return prefix + " " + std::string{enumSupport::toString(k).value_or("?")} + ": " + header.value; });
                 else
                     log([&]{ return prefix + " " + k + ": " + header.value; });
             });
@@ -551,14 +566,21 @@ namespace dci::module::www::agent
         }
 
         _sol.flush();
-
         if(!_responsePromise.resolved())
+        {
             _responsePromise.resolveValue(std::move(_responseAccumuler));
+        }
 
         dbgAssert(_connection);
         if(connectionClose)
-            _connection->ioWantClose(this);
+            _connection->ioWantClose(rcptr());
         else
-            _connection->ioDone(this);
+            _connection->ioDone(rcptr());
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    bool Io::isOrphan() const
+    {
+        return !_agent || !_site || !_connection;
+    };
 }

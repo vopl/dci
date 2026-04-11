@@ -13,7 +13,6 @@
 #include "pch.hpp"
 #include "agent/site.hpp"
 #include "agent/io.hpp"
-#include "agent/owningDList.hpp"
 
 namespace dci::module::www
 {
@@ -38,12 +37,12 @@ namespace dci::module::www
         const api::agent::log::Source<>::Opposite& logSink() const;
 
         void siteDone(agent::Site* site);
-        void ioCancelled(agent::Io* io);
-        void ioFailed(agent::Io* io);
+        void ioCancelled(agent::RCPtr<agent::Io> io);
+        void ioFailed(agent::RCPtr<agent::Io> io);
 
     private:
         void fail(ExceptionPtr&& fail = {});
-        void io2Site(agent::Io* io);
+        void io2Site(agent::RCPtr<agent::Io> io);
 
         Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannelsNet(sbs::Owner& sol);
         Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannelsHttp(sbs::Owner& sol);
@@ -79,7 +78,7 @@ namespace dci::module::www
         List<api::agent::Hook<>::Opposite> _hooksNet;
         List<api::agent::Hook<>::Opposite> _hooksHttp;
 
-        using Ios = agent::OwningDList<agent::Io>;
+        using Ios = std::flat_set<agent::RCPtr<agent::Io>>;
 
         using Sites = bmi::multi_index_container<
             agent::Site,

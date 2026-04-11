@@ -30,6 +30,8 @@
 #include <dci/stiac.hpp>
 #include <dci/crypto/blake2b.hpp>
 
+#include <flat_set>
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 

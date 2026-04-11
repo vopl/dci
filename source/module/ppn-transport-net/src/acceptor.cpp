@@ -88,6 +88,8 @@ namespace dci::module::ppn::transport::net
                     _netStreamServer->accepted() += _sow * [this](idl::gen::net::stream::Channel<>&& netStreamChannel)
                     {
                         netStreamChannel->setOption(idl::gen::net::option::NoDelay{true});
+                        netStreamChannel->setOption(idl::gen::net::option::Keepalive{true, 10, 5, 4}).value();
+                        netStreamChannel->setOption(idl::gen::net::option::UserTimeout{30*1000}).value();
 
                         Channel* impl = new Channel(apit::Address{}, std::move(netStreamChannel));
                         impl->involvedChanged() += impl * [impl](bool v)

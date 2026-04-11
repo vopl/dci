@@ -11,8 +11,8 @@
 #pragma once
 
 #include "pch.hpp"
-#include "owningDList.hpp"
 #include "site/endpoint.hpp"
+#include "rcptr.hpp"
 
 namespace dci::module::www
 {
@@ -32,37 +32,39 @@ namespace dci::module::www::agent
         ~Site();
 
         const site::Endpoint& endpoint() const;
-        void perform(Io* io);
+        void perform(RCPtr<Io> io);
         void fail(const ExceptionPtr& fail);
 
     private:
         friend Connection;
         friend Io;
 
-        void connectionChanged(Connection* connection);
-        void ioCancelled(Io* io);
-        void ioFailed(Io* io);
+        void connectionChanged(RCPtr<Connection> connection);
+        void ioCancelled(RCPtr<Io> io);
+        void ioFailed(RCPtr<Io> io);
         void flowLogicStep();
         void connectLogic();
 
     private:
-        Agent*                  _agent{};
-        const site::Endpoint    _endpoint;
+        Agent*                      _agent{};
+        const site::Endpoint        _endpoint;
 
-        uint32                  _topConnectionId{};
-        std::set<uint32>        _unusedConnectionIds;
+        uint32                      _topConnectionId{};
+        std::set<uint32>            _unusedConnectionIds;
 
-        std::chrono::steady_clock::time_point   _lastConnectMoment{};
-        poll::Timer                             _connectTicker{std::chrono::seconds{1}, [this]{ connectLogic(); }};
+        std::chrono::steady_clock::time_point
+                                    _lastConnectMoment{};
+        poll::Timer                 _connectTicker{std::chrono::seconds{1}, [this]{ connectLogic(); }};
 
+        std::flat_set<RCPtr<Connection>>    _connectionsPending;
+        std::flat_set<RCPtr<Connection>>    _connectionsWorking;
+        std::flat_set<RCPtr<Connection>>    _connectionsFull;
+        std::flat_set<RCPtr<Connection>>    _connectionsShutdown;
 
-        OwningDList<Connection> _connectionsPending;
-        OwningDList<Connection> _connectionsWorking;
-        OwningDList<Connection> _connectionsFull;
-        OwningDList<Connection> _connectionsShutdown;
+        std::size_t                 _connectionsWorkingRoundRobin{};
 
-        OwningDList<Io>         _iosPending;
-        std::size_t             _iosPerformingCount{};
+        std::flat_set<RCPtr<Io>>    _iosPending;
+        std::size_t                 _iosPerformingCount{};
     };
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
