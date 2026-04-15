@@ -374,6 +374,9 @@ namespace dci::module::net::enumerator
             return;
         }
 
+        bool someForLinks{};
+        bool someForRoutes{};
+
         for(;;)
         {
             ssize_t readedSSize = recvmsg(fd, &_msg, MSG_DONTWAIT);
@@ -405,6 +408,7 @@ namespace dci::module::net::enumerator
 
                 case RTM_NEWLINK:
                     _state |= sf_responseLink;
+                    someForLinks = true;
                     {
                         ifinfomsg* ifi = static_cast<ifinfomsg*>(NLMSG_DATA(h));
                         uint32 id = static_cast<uint32>(ifi->ifi_index);
@@ -462,6 +466,7 @@ namespace dci::module::net::enumerator
 
                 case RTM_DELLINK:
                     _state |= sf_responseLink;
+                    someForLinks = true;
                     {
                         ifinfomsg* ifi = static_cast<ifinfomsg*>(NLMSG_DATA(h));
                         _links->delLink(static_cast<uint32>(ifi->ifi_index));
@@ -471,6 +476,7 @@ namespace dci::module::net::enumerator
                 case RTM_NEWADDR:
                 case RTM_DELADDR:
                     _state |= sf_responseAddr;
+                    someForLinks = true;
                     {
                         ifaddrmsg* ifa = static_cast<ifaddrmsg *>(NLMSG_DATA(h));
                         uint32 linkId = static_cast<uint32>(ifa->ifa_index);
@@ -531,6 +537,7 @@ namespace dci::module::net::enumerator
                 case RTM_NEWROUTE:
                 case RTM_DELROUTE:
                     _state |= sf_responseRoute;
+                    someForRoutes = true;
                     {
                         rtmsg* rt = static_cast<rtmsg *>(NLMSG_DATA(h));
 
@@ -583,8 +590,15 @@ namespace dci::module::net::enumerator
             }
         }
 
-        _links->flushChanges();
-        _routes->flushChanges();
+        if(someForLinks)
+        {
+            _links->flushChanges((_state & sf_responseLink) && (_state & sf_responseAddr));
+        }
+
+        if(someForRoutes)
+        {
+            _routes->flushChanges((_state & sf_responseRoute));
+        }
     }
 }
 

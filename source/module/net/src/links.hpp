@@ -30,7 +30,7 @@ namespace dci::module::net
 
         void delLink(uint32 id);
 
-        void flushChanges();
+        void flushChanges(bool complete);
 
     private:
         using Interfaces        = Map<uint32, api::Link<>>;
@@ -42,6 +42,8 @@ namespace dci::module::net
 
         //work
         Interfaces          _interfaces;
+        cmt::Promise<Interfaces>
+                            _interfacesInitial;
         Implementations     _implementations;
 
         //changes

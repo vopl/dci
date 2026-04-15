@@ -16,8 +16,8 @@
 namespace dci::cmt
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    template <details::CWaitableOrContainer... Waitables> std::size_t waitAny (Waitables&... waitables);
-    template <details::CWaitableOrContainer... Waitables> void        waitAll (Waitables&... waitables);
+    template <details::CWaitableOrContainer... Waitables> std::size_t waitAny (Waitables&&... waitables);
+    template <details::CWaitableOrContainer... Waitables> void        waitAll (Waitables&&... waitables);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <details::CExpr Expr> std::bitset<details::expr::countWaitables<Expr>()> wait(Expr&& expr);
@@ -27,12 +27,12 @@ namespace dci::cmt
 namespace dci::cmt
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    template <details::CWaitableOrContainer... Waitables> std::size_t waitAny(Waitables&... waitables)
+    template <details::CWaitableOrContainer... Waitables> std::size_t waitAny(Waitables&&... waitables)
     {
         return details::waiterCaller<details::Kind::any>(waitables...);
     }
 
-    template <details::CWaitableOrContainer... Waitables> void waitAll(Waitables&... waitables)
+    template <details::CWaitableOrContainer... Waitables> void waitAll(Waitables&&... waitables)
     {
         return details::waiterCaller<details::Kind::all>(waitables...);
     }

@@ -96,7 +96,7 @@ namespace dci::module::net::enumerator
                     onRouteChange(change);
                 }
                 FreeMibTable(table);
-                _routes->flushChanges();
+                _routes->flushChanges(true);
             }
         }
     }
@@ -129,7 +129,7 @@ namespace dci::module::net::enumerator
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         ~LinkChangeCommon()
         {
-            _links->flushChanges();
+            _links->flushChanges(true);
         }
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -518,7 +518,7 @@ namespace dci::module::net::enumerator
             {
                 onRouteChange(change);
             }
-            _routes->flushChanges();
+            _routes->flushChanges(true);
         }
     }
 }

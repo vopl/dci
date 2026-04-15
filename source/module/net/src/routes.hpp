@@ -28,13 +28,18 @@ namespace dci::module::net
         void add(const api::route::Entry6& e);
         void del(const api::route::Entry6& e);
 
-        void flushChanges();
+        void flushChanges(bool complete);
 
     private:
         api::Host<>::Opposite * _iface = nullptr;
 
         List<api::route::Entry4> _table4;
         List<api::route::Entry6> _table6;
+
+        cmt::Promise<List<api::route::Entry4>>
+                                 _table4Initial;
+        cmt::Promise<List<api::route::Entry6>>
+                                 _table6Initial;
 
         List<api::route::Entry4> _added4;
         List<api::route::Entry6> _added6;

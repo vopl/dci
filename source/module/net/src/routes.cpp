@@ -19,11 +19,15 @@ namespace dci::module::net
     {
         (*_iface)->route4() += this * [&]()
         {
+            if(_table4Initial.charged())
+                return _table4Initial.future();
             return cmt::readyFuture(_table4);
         };
 
         (*_iface)->route6() += this * [&]()
         {
+            if(_table6Initial.charged())
+                return _table6Initial.future();
             return cmt::readyFuture(_table6);
         };
     }
@@ -31,6 +35,8 @@ namespace dci::module::net
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Routes::~Routes()
     {
+        _table4Initial.uncharge();
+        _table6Initial.uncharge();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -58,7 +64,7 @@ namespace dci::module::net
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Routes::flushChanges()
+    void Routes::flushChanges(bool complete)
     {
         List<api::route::Entry4> added4;
         List<api::route::Entry6> added6;
@@ -104,6 +110,18 @@ namespace dci::module::net
         for(const api::route::Entry6& e : added6)
         {
             _table6.push_back(e);
+        }
+
+        if(complete && _table4Initial.charged())
+        {
+            _table4Initial.resolveValue(_table4);
+            _table4Initial.uncharge();
+        }
+
+        if(complete && _table6Initial.charged())
+        {
+            _table6Initial.resolveValue(_table6);
+            _table6Initial.uncharge();
         }
 
         if(!added4.empty() || some4Deleted)

@@ -20,6 +20,8 @@ namespace dci::module::net
     {
         (*_iface)->links() += this * [&]
         {
+            if(_interfacesInitial.charged())
+                return _interfacesInitial.future();
             return cmt::readyFuture(_interfaces);
         };
     }
@@ -33,6 +35,7 @@ namespace dci::module::net
         _added.clear();
         _implementations.clear();
         _interfaces.clear();
+        _interfacesInitial.uncharge();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -75,7 +78,7 @@ namespace dci::module::net
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Links::flushChanges()
+    void Links::flushChanges(bool complete)
     {
         Implementations added;
         added.swap(_added);
@@ -109,6 +112,12 @@ namespace dci::module::net
         for(auto& p : _implementations)
         {
             p.second->flushChanges();
+        }
+
+        if(complete && _interfacesInitial.charged())
+        {
+            _interfacesInitial.resolveValue(_interfaces);
+            _interfacesInitial.uncharge();
         }
 
         for(auto& p : added)
