@@ -15,6 +15,8 @@ ${CDIR}/spares/install_zlib.sh 1
 ${CDIR}/spares/install_gcc.sh 1
 ${CDIR}/spares/install_binutils.sh 1
 
+${CDIR}/spares/install_glibc.sh
+
 ${CDIR}/spares/install_zstd.sh 2
 ${CDIR}/spares/install_zlib.sh 2
 ${CDIR}/spares/install_gcc.sh 2
