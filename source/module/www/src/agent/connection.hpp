@@ -59,14 +59,14 @@ namespace dci::module::www::agent
         connection::State state() const;
 
         std::size_t iosPerformingCount() const;
-        void perform(RCPtr<Io> io);
+        void perform(RCPtr<Io>&& io);
         void fail(const ExceptionPtr& fail);
         const ExceptionPtr& fail() const;
 
-        void ioCancelled(RCPtr<Io> io);
-        void ioFailed(RCPtr<Io> io);
-        void ioDone(RCPtr<Io> io);
-        void ioWantClose(RCPtr<Io> io);
+        void ioCancelled(const RCPtr<Io>& io);
+        void ioFailed(const RCPtr<Io>& io);
+        void ioDone(const RCPtr<Io>& io);
+        void ioWantClose(const RCPtr<Io>& io);
 
         const api::agent::log::Stream<>::Opposite& logStream();
 

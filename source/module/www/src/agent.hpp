@@ -36,13 +36,13 @@ namespace dci::module::www
 
         const api::agent::log::Source<>::Opposite& logSink() const;
 
-        void siteDone(agent::Site* site);
-        void ioCancelled(agent::RCPtr<agent::Io> io);
-        void ioFailed(agent::RCPtr<agent::Io> io);
+        void siteDone(const agent::RCPtr<agent::Site>& site);
+        void ioCancelled(const agent::RCPtr<agent::Io>& io);
+        void ioFailed(const agent::RCPtr<agent::Io>& io);
 
     private:
         void fail(ExceptionPtr&& fail = {});
-        void io2Site(agent::RCPtr<agent::Io> io);
+        void io2Site(agent::RCPtr<agent::Io>&& io);
 
         Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannelsNet(sbs::Owner& sol);
         Tuple<api::stream::Channel<> /*local*/, api::stream::Channel<>::Opposite /*remote*/> makeHookChannelsHttp(sbs::Owner& sol);
@@ -80,9 +80,23 @@ namespace dci::module::www
 
         using Ios = std::flat_set<agent::RCPtr<agent::Io>>;
 
+        struct SiteRecord
+        {
+            agent::RCPtr<agent::Site> _instance;
+
+            const agent::RCPtr<agent::Site>& instance() const { return _instance; }
+            const agent::site::Endpoint& endpoint() const { return _instance->endpoint(); }
+        };
+
+        using SitesByInstance = bmi::member<SiteRecord, agent::RCPtr<agent::Site>, &SiteRecord::_instance>;
+        using SitesByEndpoint = bmi::const_mem_fun<SiteRecord, const agent::site::Endpoint&, &SiteRecord::endpoint>;
+
         using Sites = bmi::multi_index_container<
-            agent::Site,
-            bmi::indexed_by<bmi::ordered_unique<bmi::identity<agent::Site>, std::less<void>>>
+            SiteRecord,
+            bmi::indexed_by<
+                bmi::ordered_unique<bmi::tag<SitesByInstance>, SitesByInstance>,
+                bmi::ordered_unique<bmi::tag<SitesByEndpoint>, SitesByEndpoint>
+            >
         >;
 
         Variant<Ios, Sites> _staff;

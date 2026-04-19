@@ -416,7 +416,7 @@ namespace dci::utils::ip
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool fromString(std::string_view str, Address4& addr)
     {
-        if(str.data()[str.size()])//asciiz?
+        if(!str.data()[str.size()])//asciiz?
         {
             return 1 == inet_pton(AF_INET, str.data(), addr.data());
         }
@@ -457,7 +457,7 @@ namespace dci::utils::ip
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool fromString(std::string_view str, Address6& addr)
     {
-        if(str.data()[str.size()])//asciiz?
+        if(!str.data()[str.size()])//asciiz?
         {
             return 1 == inet_pton(AF_INET6, str.data(), addr.data());
         }

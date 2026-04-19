@@ -445,7 +445,7 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::perform(RCPtr<Io> io)
+    void Connection::perform(RCPtr<Io>&& io)
     {
         auto holder{rcptr()};
 
@@ -469,10 +469,8 @@ namespace dci::module::www::agent
         dbgAssert(_httpChannel);
         dbgAssert(!_fail);
 
-        _iosPerforming.insert(io);
         io->setConnection(this);
-        if(!isWorkable())
-            return;
+        _iosPerforming.insert(io);
 
         if(iosPerformingCount() >= _agent->_maxIoPerformingPerConection)
             _state = connection::State::full;
@@ -514,11 +512,7 @@ namespace dci::module::www::agent
         }
 
         if(_logStream)
-        {
             _logStream->content(String{"fail: "} + exception::toString(_fail));
-            if(!isWorkable())
-                return;
-        }
 
         close();
     }
@@ -530,19 +524,19 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioCancelled(RCPtr<Io> io)
+    void Connection::ioCancelled(const RCPtr<Io>& io)
     {
-        ioDone(std::move(io));
+        ioDone(io);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioFailed(RCPtr<Io> io)
+    void Connection::ioFailed(const RCPtr<Io>& io)
     {
-        ioDone(std::move(io));
+        ioDone(io);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioDone(RCPtr<Io> io)
+    void Connection::ioDone(const RCPtr<Io>& io)
     {
         auto holder{rcptr()};
 
@@ -550,9 +544,6 @@ namespace dci::module::www::agent
         dbgAssert(_iosPerforming.contains(io));
         io->setConnection({});
         _iosPerforming.erase(io);
-        io.reset();
-        if(!isWorkable())
-            return;
 
         switch(_state)
         {
@@ -573,7 +564,7 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Connection::ioWantClose(RCPtr<Io> io)
+    void Connection::ioWantClose(const RCPtr<Io>& io)
     {
         auto holder{rcptr()};
 
@@ -581,9 +572,6 @@ namespace dci::module::www::agent
         dbgAssert(_iosPerforming.contains(io));
         io->setConnection({});
         _iosPerforming.erase(io);
-        io.reset();
-        if(!isWorkable())
-            return;
 
         switch(_state)
         {

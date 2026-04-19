@@ -47,14 +47,23 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Site::setAgent(Agent* agent)
+    {
+        dbgAssert(!_agent == !!agent);
+        _agent = agent;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     const site::Endpoint& Site::endpoint() const
     {
         return _endpoint;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::perform(RCPtr<Io> io)
+    void Site::perform(RCPtr<Io>&& io)
     {
+        auto holder{rcptr()};
+
         io->setSite(this);
         _iosPending.insert(std::move(io));
         flowLogicStep();
@@ -77,12 +86,15 @@ namespace dci::module::www::agent
 
         callFail(_iosPending);
 
-        _agent->siteDone(this);
+        if(_agent)
+            _agent->siteDone(rcptr());
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::connectionChanged(RCPtr<Connection> connection)
+    void Site::connectionChanged(const RCPtr<Connection>& connection)
     {
+        auto holder{rcptr()};
+
         Connection::SiteData& siteData = connection->_siteData;
 
         std::size_t newIosPerformingCount = connection->iosPerformingCount();
@@ -151,11 +163,17 @@ namespace dci::module::www::agent
                 else
                     _unusedConnectionIds.insert(connection->id());
 
-                ExceptionPtr fail;
                 if(connection::State::fail == siteData._state)
-                    fail = connection->fail();
+                {
+                    if(!_iosPending.empty())
+                    {
+                        auto ioIter = _iosPending.end();
+                        --ioIter;
+                        RCPtr<Io> io = *ioIter;
+                        io->fail(connection->fail());
+                    }
+                }
 
-                connection.reset();
                 flowLogicStep();
 
                 break;
@@ -167,14 +185,14 @@ namespace dci::module::www::agent
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::ioCancelled(RCPtr<Io> io)
+    void Site::ioCancelled(const RCPtr<Io>& io)
     {
         _iosPending.erase(io);
         flowLogicStep();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Site::ioFailed(RCPtr<Io> io)
+    void Site::ioFailed(const RCPtr<Io>& io)
     {
         _iosPending.erase(io);
         flowLogicStep();
@@ -183,10 +201,18 @@ namespace dci::module::www::agent
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Site::flowLogicStep()
     {
+        auto holder{rcptr()};
+
+        if(!_agent)
+        {
+            fail(exception::buildInstance<api::agent::Stopped>());
+            return;
+        }
+
         if(_connectionsPending.empty() && _connectionsWorking.empty() && _connectionsFull.empty() && _connectionsShutdown.empty() && _iosPending.empty())
         {
             dbgAssert(!_iosPerformingCount);
-            _agent->siteDone(this);
+            _agent->siteDone(holder);
             return;
         }
 
@@ -220,6 +246,14 @@ namespace dci::module::www::agent
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Site::connectLogic()
     {
+        auto holder{rcptr()};
+
+        if(!_agent)
+        {
+            fail(exception::buildInstance<api::agent::Stopped>());
+            return;
+        }
+
         if(_iosPending.empty())
             return;
 
@@ -260,23 +294,5 @@ namespace dci::module::www::agent
         _connectionsPending.emplace(RCPtr<Connection>(new Connection(_agent, this, id)));
         flowLogicStep();
         return;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool operator<(const agent::Site& a, const agent::Site& b)
-    {
-        return a.endpoint() < b.endpoint();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool operator<(const agent::Site& a, const agent::site::Endpoint& b)
-    {
-        return a.endpoint() < b;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool operator<(const agent::site::Endpoint& a, const agent::Site& b)
-    {
-        return a < b.endpoint();
     }
 }

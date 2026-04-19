@@ -36,6 +36,7 @@ namespace dci::module::www::agent
     template <class T>
     RCPtr<T> RefCounted<T>::rcptr()
     {
+        dbgAssert(_refs);
         return RCPtr<T>{static_cast<T*>(this)};
     }
 }

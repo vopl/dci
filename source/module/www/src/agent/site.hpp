@@ -26,22 +26,25 @@ namespace dci::module::www::agent
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     class Site
+        : public RefCounted<Site>
     {
     public:
         Site(Agent* agent, site::Endpoint&& endpoint);
         ~Site();
 
+        void setAgent(Agent* agent);
+
         const site::Endpoint& endpoint() const;
-        void perform(RCPtr<Io> io);
+        void perform(RCPtr<Io>&& io);
         void fail(const ExceptionPtr& fail);
 
     private:
         friend Connection;
         friend Io;
 
-        void connectionChanged(RCPtr<Connection> connection);
-        void ioCancelled(RCPtr<Io> io);
-        void ioFailed(RCPtr<Io> io);
+        void connectionChanged(const RCPtr<Connection>& connection);
+        void ioCancelled(const RCPtr<Io>& io);
+        void ioFailed(const RCPtr<Io>& io);
         void flowLogicStep();
         void connectLogic();
 
@@ -66,9 +69,4 @@ namespace dci::module::www::agent
         std::flat_set<RCPtr<Io>>    _iosPending;
         std::size_t                 _iosPerformingCount{};
     };
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool operator<(const agent::Site& a,             const agent::Site& b);
-    bool operator<(const agent::Site& a,             const agent::site::Endpoint& b);
-    bool operator<(const agent::site::Endpoint& a,   const agent::Site& b);
 }

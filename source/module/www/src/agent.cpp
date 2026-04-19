@@ -288,23 +288,24 @@ namespace dci::module::www
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::siteDone(Site* site)
+    void Agent::siteDone(const agent::RCPtr<Site>& site)
     {
         dbgAssert(_staff.holds<Sites>());
         Sites& sites = _staff.get<Sites>();
-        dbgAssert(sites.contains(site->endpoint()) && &(sites.find(site->endpoint()).get_node()->value()) == site);
-        sites.erase(sites.iterator_to(*site));
+        dbgAssert(sites.contains(site));
+        sites.erase(site);
+        site->setAgent({});
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::ioCancelled(RCPtr<Io> io)
+    void Agent::ioCancelled(const RCPtr<Io>& io)
     {
         if(_staff.holds<Ios>())
             _staff.get<Ios>().erase(io);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::ioFailed(RCPtr<Io> io)
+    void Agent::ioFailed(const RCPtr<Io>& io)
     {
         if(_staff.holds<Ios>())
             _staff.get<Ios>().erase(io);
@@ -326,12 +327,12 @@ namespace dci::module::www
         {
             Sites& sites = _staff.get<Sites>();
             while(!sites.empty())
-                const_cast<Site&>(*sites.begin()).fail(_fail);
+                sites.begin()->_instance->fail(_fail);
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Agent::io2Site(RCPtr<Io> io)
+    void Agent::io2Site(RCPtr<Io>&& io)
     {
         dbgAssert(_staff.holds<Sites>());
 
@@ -343,11 +344,16 @@ namespace dci::module::www
             return;
 
         Sites& sites = _staff.get<Sites>();
-        auto iter = sites.lower_bound(siteEndpoint.value());
-        if(sites.end() == iter || siteEndpoint.value() != iter->endpoint())
-            iter = sites.emplace_hint(iter, this, std::move(siteEndpoint.value()));
-        Site& site = const_cast<Site&>(*iter);
-        site.perform(std::move(io));
+        auto& sitesByEndpoint = sites.get<SitesByEndpoint>();
+        auto iter = sitesByEndpoint.lower_bound(siteEndpoint.value());
+        if(sitesByEndpoint.end() == iter || siteEndpoint.value() != iter->endpoint())
+        {
+            agent::RCPtr<agent::Site> site{new agent::Site{this, std::move(siteEndpoint.value())}};
+            auto iter2 = sites.project<SitesByInstance>(iter);
+            iter2 = sites.emplace_hint(iter2, std::move(site));
+            iter = sites.project<SitesByEndpoint>(iter2);
+        }
+        iter->_instance->perform(std::move(io));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
