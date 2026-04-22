@@ -297,7 +297,7 @@ namespace dci::module::www::io
         _outputHolder.clear();
 
         if(_streamChannel)
-            ChannelSoftClosing::instance().push(std::exchange(_streamChannel, {}));
+            channelSoftClosing::push(std::exchange(_streamChannel, {}));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

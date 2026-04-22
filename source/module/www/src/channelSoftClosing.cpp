@@ -11,88 +11,141 @@
 #include "pch.hpp"
 #include "channelSoftClosing.hpp"
 
-namespace dci::module::www
+namespace dci::module::www::channelSoftClosing
 {
     namespace
     {
-        class ChannelSoftClosingInstance
-            : public ChannelSoftClosing
-            , public mm::heap::Allocable<ChannelSoftClosingInstance>
+        class Instance
+            : public mm::heap::Allocable<Instance>
         {
+        public:
+            void push(api::stream::Channel<>&& target);
+
+        protected:
+            struct Channel
+            {
+                Channel(api::stream::Channel<>&& target);
+                ~Channel();
+
+                api::stream::Channel<>  _target;
+                mutable poll::Timer     _timer{std::chrono::milliseconds{ 15000 }};
+                mutable sbs::Owner      _sol;
+            };
+
+            struct ChannelCmp
+            {
+                using is_transparent = void;
+                bool operator()(const Channel& a, const Channel& b) const;
+                bool operator()(const Channel& a, const api::stream::Channel<>& b) const;
+                bool operator()(const api::stream::Channel<>& a, const Channel& b) const;
+            };
+
+            std::set<Channel, ChannelCmp> _channels;
         };
 
-        std::unique_ptr<ChannelSoftClosingInstance> p_instance{};
-    }
+        std::optional<Instance> g_instance{};
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void ChannelSoftClosing::push(api::stream::Channel<>&& target)
-    {
-        dbgAssert(target);
-
-        auto [iter, emplaced] = _channels.emplace(std::move(target));
-        dbgAssert(emplaced);
-        if(emplaced)
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        void Instance::push(api::stream::Channel<>&& target)
         {
-            const Channel& channel = *iter;
-            channel._target->shutdown();
+            dbgAssert(target);
 
+            auto [iter, emplaced] = _channels.emplace(std::move(target));
+            dbgAssert(emplaced);
+            if(emplaced)
             {
-                auto cleanup = [this, weakTarget = channel._target.weak()]
-                {
-                    auto iter = _channels.find(weakTarget);
-                    if(_channels.end() != iter)
-                        _channels.erase(iter);
-                };
+                const Channel& channel = *iter;
+                channel._target->shutdown();
 
-                channel._target.involvedChanged() += channel._sol * [cleanup](bool involved)
                 {
-                    if(!involved)
+                    auto cleanup = [this, weakTarget = channel._target.weak()]
+                    {
+                        auto iter = _channels.find(weakTarget);
+                        if(_channels.end() != iter)
+                            _channels.erase(iter);
+                    };
+
+                    channel._target.involvedChanged() += channel._sol * [cleanup](bool involved)
+                    {
+                        if(!involved)
+                            cleanup();
+                    };
+                    channel._target->closed() += channel._sol * cleanup;
+                    channel._target->failed() += channel._sol * [cleanup](ExceptionPtr&&)
+                    {
                         cleanup();
-                };
-                channel._target->closed() += channel._sol * cleanup;
-                channel._target->failed() += channel._sol * [cleanup](ExceptionPtr&&)
-                {
-                    cleanup();
-                };
-                channel._timer.tick() += channel._sol * std::move(cleanup);
-                channel._timer.start();
+                    };
+                    channel._timer.tick() += channel._sol * std::move(cleanup);
+                    channel._timer.start();
+                }
             }
+        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        Instance::Channel::Channel(api::stream::Channel<>&& target)
+            : _target{std::move(target)}
+        {
+        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        Instance::Channel::~Channel()
+        {
+            _sol.flush();
+            if(_target && _target.involved())
+            {
+                _target->close();
+            }
+        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        bool Instance::ChannelCmp::operator()(const Channel& a, const Channel& b) const
+        {
+            return a._target < b._target;
+        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        bool Instance::ChannelCmp::operator()(const Channel& a, const api::stream::Channel<>& b) const
+        {
+            return a._target < b;
+        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        bool Instance::ChannelCmp::operator()(const api::stream::Channel<>& a, const Channel& b) const
+        {
+            return a < b._target;
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void ChannelSoftClosing::moduleStarted()
+    void moduleStarted()
     {
-        p_instance = std::make_unique<ChannelSoftClosingInstance>();
+        g_instance.emplace();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    ChannelSoftClosing& ChannelSoftClosing::instance()
+    void push(api::stream::Channel<>&& target)
     {
-        dbgAssert(p_instance);
-        return *p_instance;
+        if(g_instance)
+        {
+            g_instance->push(std::move(target));
+        }
+        else
+        {
+            target->shutdown();
+            target->close();
+        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void ChannelSoftClosing::moduleStopRequested()
+    void moduleStopRequested()
     {
         // хост запросил добровольный останов модуля
         // пока ничего не делаем, пусть еще некоторое время каналы будут не закрыты, может за эту толику успеет еще что то отправиться в сеть
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void ChannelSoftClosing::moduleStopped()
+    void moduleStopped()
     {
-        p_instance.reset();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    ChannelSoftClosing::ChannelSoftClosing()
-    {
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    ChannelSoftClosing::~ChannelSoftClosing()
-    {
+        g_instance.reset();
     }
 }

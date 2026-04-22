@@ -12,59 +12,13 @@
 
 #include "pch.hpp"
 
-namespace dci::module::www
+namespace dci::module::www::channelSoftClosing
 {
-    class ChannelSoftClosing
-    {
-    public:
-        void push(api::stream::Channel<>&& target);
+    void moduleStarted();
 
-    public:
-        static void moduleStarted();
-        static ChannelSoftClosing& instance();
-        static void moduleStopRequested();
-        static void moduleStopped();
+    void push(api::stream::Channel<>&& target);
 
-    protected:
-        ChannelSoftClosing();
-        ~ChannelSoftClosing();
+    void moduleStopRequested();
+    void moduleStopped();
 
-    protected:
-        struct Channel
-        {
-            Channel(api::stream::Channel<>&& target)
-                : _target{std::move(target)}
-            {
-            }
-            ~Channel()
-            {
-                _sol.flush();
-            }
-
-            api::stream::Channel<>  _target;
-            mutable poll::Timer     _timer{std::chrono::milliseconds{ 15000 }};
-            mutable sbs::Owner      _sol;
-        };
-
-        struct ChannelCmp
-        {
-            using is_transparent = void;
-            bool operator()(const Channel& a, const Channel& b) const
-            {
-                return a._target < b._target;
-            }
-
-            bool operator()(const Channel& a, const api::stream::Channel<>& b) const
-            {
-                return a._target < b;
-            }
-
-            bool operator()(const api::stream::Channel<>& a, const Channel& b) const
-            {
-                return a < b._target;
-            }
-        };
-
-        std::set<Channel, ChannelCmp> _channels;
-    };
 }

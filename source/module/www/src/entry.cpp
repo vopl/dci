@@ -47,19 +47,19 @@ namespace dci::module::www
 
             bool start(host::Manager* manager) override
             {
-                ChannelSoftClosing::moduleStarted();
+                channelSoftClosing::moduleStarted();
                 return dci::host::module::Entry::start(manager);
             }
 
             cmt::Future<> stopRequest() override
             {
-                ChannelSoftClosing::moduleStopRequested();
+                channelSoftClosing::moduleStopRequested();
                 return dci::host::module::Entry::stopRequest();
             }
 
             bool stop() override
             {
-                ChannelSoftClosing::moduleStopped();
+                channelSoftClosing::moduleStopped();
                 return dci::host::module::Entry::stop();
             }
 
