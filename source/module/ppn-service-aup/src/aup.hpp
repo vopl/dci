@@ -13,8 +13,9 @@
 #include "pch.hpp"
 #include "aup_legacy_since_2025_04/supplier/catalog.hpp"
 #include "aup_legacy_since_2025_04/supplier/storage.hpp"
-#include "aup_legacy_since_2025_04/consumer/catalog.hpp"
-#include "aup_legacy_since_2025_04/consumer/storage.hpp"
+
+#include "doer/supplier.hpp"
+#include "doer/consumer.hpp"
 
 namespace dci::module::ppn::service
 {
@@ -27,7 +28,19 @@ namespace dci::module::ppn::service
         ~Aup();
 
     private:
-        void joined(link::Remote<> r);
+        void joined(const link::Id& rid, link::Remote<> r);
+
+    private:
+
+        struct Doer
+        {
+            api::Supplier<>::Opposite   _supplierApi;
+            aup::doer::Supplier         _supplier;
+            aup::doer::Consumer         _consumer;
+
+            Doer();
+        };
+        std::optional<Doer> _doer;
 
     private:
         struct Legacy_since_2025_04
@@ -37,10 +50,6 @@ namespace dci::module::ppn::service
 
             aup_legacy_since_2025_04::supplier::Catalog _supplierCatalog;
             aup_legacy_since_2025_04::supplier::Storage _supplierStorage;
-
-            aup_legacy_since_2025_04::consumer::base::Quota   _consumerQuota;
-            aup_legacy_since_2025_04::consumer::Catalog       _consumerCatalog;
-            aup_legacy_since_2025_04::consumer::Storage       _consumerStorage;
 
             Legacy_since_2025_04();
         };

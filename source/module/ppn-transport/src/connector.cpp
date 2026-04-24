@@ -90,7 +90,7 @@ namespace dci::module::ppn::transport
                         }
                     }
 
-                    api::connector::ConnectionRefused err{"all lower layers failed for "+address.value+lle};
+                    api::connector::ConnectionRefused err{"no lower layers connected to "+address.value+lle};
                     out.resolveException(exception::buildInstance<api::connector::ConnectionRefused>(err));
                 }
 

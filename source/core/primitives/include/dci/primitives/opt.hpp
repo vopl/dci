@@ -26,8 +26,14 @@ namespace dci::primitives
         Opt(const Opt&) = default;
         Opt(Opt&&) = default;
 
+        Opt(const Base& other) : Base{other} {}
+        Opt(Base&& other) : Base{std::move(other)} {}
+
         Opt& operator=(const Opt&) = default;
         Opt& operator=(Opt&&) = default;
+
+        Opt& operator=(const Base& other) {Base::operator=(other); return *this;}
+        Opt& operator=(Base&& other) {Base::operator=(std::move(other)); return *this;}
 
               Base&  std()       & {return *this;}
         const Base&  std() const & {return *this;}

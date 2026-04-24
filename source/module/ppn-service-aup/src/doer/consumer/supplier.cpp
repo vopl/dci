@@ -8,24 +8,9 @@
 // e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
-#pragma once
+#include "pch.hpp"
+#include "supplier.hpp"
 
-#include "logger/stream.hpp"
-#include "logger/timeProvider.hpp"
-
-#if !defined(dciLoggerIdentity)
-#   if defined(dciModuleName)
-#       define dciLoggerIdentity dciModuleName
-#   elif defined(dciUnitName)
-#       define dciLoggerIdentity dciUnitName
-#   else
-#       define dciLoggerIdentity ""
-#   endif
-#endif
-
-#   define LOGF(...) ::dci::logger::Stream{"FTL", dciLoggerIdentity} << __VA_ARGS__
-#   define LOGE(...) ::dci::logger::Stream{"ERR", dciLoggerIdentity} << __VA_ARGS__
-#   define LOGW(...) ::dci::logger::Stream{"WRN", dciLoggerIdentity} << __VA_ARGS__
-#   define LOGI(...) ::dci::logger::Stream{"INF", dciLoggerIdentity} << __VA_ARGS__
-#   define LOGD(...) ::dci::logger::Stream{"DBG", dciLoggerIdentity} << __VA_ARGS__
-#   define LOGT(...) ::dci::logger::Stream{"TRC", dciLoggerIdentity} << __VA_ARGS__
+namespace dci::module::ppn::service::aup::doer::consumer
+{
+}

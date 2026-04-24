@@ -299,10 +299,10 @@ namespace dci::cmt::details::future
         switch(_mode)
         {
         case Mode::unresolved:
-            throw cmt::future::Exception("future unresolved");
+            throw cmt::future::exception::Unresolved{};
 
         case Mode::cancel:
-            throw cmt::future::Exception("future canceled");
+            throw cmt::future::exception::Canceled{};
 
         case Mode::exception:
             std::rethrow_exception(_exception);
@@ -321,10 +321,10 @@ namespace dci::cmt::details::future
         switch(_mode)
         {
         case Mode::unresolved:
-            throw cmt::future::Exception("future unresolved");
+            throw cmt::future::exception::Unresolved{};
 
         case Mode::cancel:
-            throw cmt::future::Exception("future canceled");
+            throw cmt::future::exception::Canceled{};
 
         case Mode::exception:
             std::rethrow_exception(_exception);
@@ -343,16 +343,16 @@ namespace dci::cmt::details::future
         switch(_mode)
         {
         case Mode::unresolved:
-            throw cmt::future::Exception("future unresolved");
+            throw cmt::future::exception::Unresolved{};
 
         case Mode::cancel:
-            throw cmt::future::Exception("future canceled");
+            throw cmt::future::exception::Canceled{};
 
         case Mode::exception:
             break;
 
         case Mode::value:
-            throw cmt::future::Exception("future resolved to value");
+            throw cmt::future::exception::ResolvedToValue{};
         }
 
         return _exception;
@@ -365,16 +365,16 @@ namespace dci::cmt::details::future
         switch(_mode)
         {
         case Mode::unresolved:
-            throw cmt::future::Exception("future unresolved");
+            throw cmt::future::exception::Unresolved{};
 
         case Mode::cancel:
-            throw cmt::future::Exception("future canceled");
+            throw cmt::future::exception::Canceled{};
 
         case Mode::exception:
             break;
 
         case Mode::value:
-            throw cmt::future::Exception("future resolved to value");
+            throw cmt::future::exception::ResolvedToValue{};
         }
 
         return _exception;

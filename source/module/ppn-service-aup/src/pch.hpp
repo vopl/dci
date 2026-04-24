@@ -16,10 +16,16 @@
 #include <dci/poll/timer.hpp>
 #include <dci/utils/b2h.hpp>
 #include <dci/utils/atScopeExit.hpp>
-#include <dci/utils/b2h.hpp>
-#include <memory>
-#include <queue>
+#include <dci/utils/overloaded.hpp>
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/member.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/composite_key.hpp>
+
 #include <deque>
+#include <flat_set>
 #include <filesystem>
 #include <unistd.h>
 #include "ppn/service/aup.hpp"
@@ -29,7 +35,9 @@ namespace dci::module::ppn::service
     using namespace dci;
     using namespace dci::aup;
 
+    namespace bmi = boost::multi_index;
+
     namespace link                      = idl::gen::ppn::node::link;
     namespace api_legacy_since_2025_04  = idl::gen::ppn::service::aup_legacy_since_2025_04;
-    //namespace api                       = idl::gen::ppn::service::aup;
+    namespace api                       = idl::gen::ppn::service::aup;
 }

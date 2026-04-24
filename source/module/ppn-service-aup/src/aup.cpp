@@ -24,6 +24,7 @@ namespace dci::module::ppn::service
         }
 
         _legacy_since_2025_04 = std::make_unique<Legacy_since_2025_04>();
+        _doer.emplace();
 
         {
             link::Feature<>::Opposite op = *this;
@@ -32,14 +33,14 @@ namespace dci::module::ppn::service
             {
                 srv->addPayload(*this);
 
-                srv->joinedByConnect() += serviceSol() * [this](const link::Id&, link::Remote<> r)
+                srv->joinedByConnect() += serviceSol() * [this](const link::Id& id, link::Remote<> r)
                 {
-                    joined(r);
+                    joined(id, std::move(r));
                 };
 
-                srv->joinedByAccept() += serviceSol() * [this](const link::Id&, link::Remote<> r)
+                srv->joinedByAccept() += serviceSol() * [this](const link::Id& id, link::Remote<> r)
                 {
-                    joined(r);
+                    joined(id, std::move(r));
                 };
             };
         }
@@ -50,14 +51,22 @@ namespace dci::module::ppn::service
             //in ids() -> set<ilid>;
             op->ids() += serviceSol() * []()
             {
-                return cmt::readyFuture(Set<idl::interface::Lid>{
-                                            api_legacy_since_2025_04::SupplierCatalog<>::lid(),
-                                            api_legacy_since_2025_04::SupplierStorage<>::lid()});
+                return cmt::readyFuture(Set<idl::interface::Lid>
+                {
+                    api::Supplier<>::lid(),
+                    api_legacy_since_2025_04::SupplierCatalog<>::lid(),
+                    api_legacy_since_2025_04::SupplierStorage<>::lid()
+                });
             };
 
             //in getInstance(Id requestorId, Remote requestor, ilid) -> interface;
             op->getInstance() += serviceSol() * [this](const link::Id&, const link::Remote<>&, idl::interface::Lid ilid)
             {
+                if(api::Supplier<>::lid() == ilid)
+                {
+                    return cmt::readyFuture(idl::Interface{_doer->_supplierApi.opposite()});
+                }
+
                 if(api_legacy_since_2025_04::SupplierCatalog<>::lid() == ilid)
                 {
                     return cmt::readyFuture(idl::Interface{_legacy_since_2025_04->_supplierCatalogApi.opposite()});
@@ -79,24 +88,21 @@ namespace dci::module::ppn::service
     {
         serviceSol().flush();
         _legacy_since_2025_04.reset();
+        _doer.reset();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Aup::joined(link::Remote<> r)
+    void Aup::joined(const link::Id& rid, link::Remote<> r)
     {
-        r->getInstance(api_legacy_since_2025_04::SupplierCatalog<>::lid()).then() += serviceSol() * [this](cmt::Future<idl::Interface> in)
+        r->getInstance(api::Supplier<>::lid()).then() += serviceSol() * [this, rid, wr{r.weak()}](cmt::Future<idl::Interface> in)
         {
-            if(in.resolvedValue())
+            if(!in.resolvedValue())
             {
-                _legacy_since_2025_04->_consumerCatalog.involve(in.value());
+                LOGD("get supplier failed: " << exception::toString(in.detachException()));
+                return;
             }
-        };
-        r->getInstance(api_legacy_since_2025_04::SupplierStorage<>::lid()).then() += serviceSol() * [this](cmt::Future<idl::Interface> in)
-        {
-            if(in.resolvedValue())
-            {
-                _legacy_since_2025_04->_consumerStorage.involve(in.value());
-            }
+
+            _doer->_consumer.joined(rid, in.value());
         };
     }
 
@@ -106,9 +112,14 @@ namespace dci::module::ppn::service
         , _supplierStorageApi{idl::interface::Initializer{}}
         , _supplierCatalog{_supplierCatalogApi}
         , _supplierStorage{_supplierStorageApi}
-        , _consumerQuota{1'000'000}
-        , _consumerCatalog{&_consumerQuota}
-        , _consumerStorage{&_consumerQuota}
+    {
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    Aup::Doer::Doer()
+        : _supplierApi{idl::interface::Initializer{}}
+        , _supplier{_supplierApi}
+        , _consumer{}
     {
     }
 }

@@ -11,7 +11,7 @@
 #include "pch.hpp"
 #include "recvBuffer.hpp"
 
-namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer::base
+namespace dci::module::ppn::service::aup::doer::consumer
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     RecvBuffer::RecvBuffer(uint32 ramBound)

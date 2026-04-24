@@ -11,22 +11,36 @@
 #pragma once
 
 #include "pch.hpp"
-#include "base.hpp"
 
-namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer
+namespace dci::module::ppn::service::aup::doer::consumer
 {
-    class Storage
-        : public Base
+    class RecvBuffer
     {
+        RecvBuffer(const RecvBuffer&) = delete;
+        RecvBuffer(RecvBuffer&&) = delete;
+
+        void operator=(const RecvBuffer&) = delete;
+        void operator=(RecvBuffer&&) = delete;
+
     public:
-        Storage(base::Quota* quota);
-        ~Storage() override;
+        RecvBuffer(uint32 ramBound);
+        ~RecvBuffer();
+
+        bool                        push(Bytes&& payload);
+        uint32                      payloadSize();
+        bool                        hasFile();
+        Bytes                       detachBytes();
+        std::FILE*                  getFile();
+        void                        reset();
 
     private:
-        bool onComplete(const Oid& oid, base::RecvBuffer& recvBuffer) override;
+        bool pushFs(Bytes&& payload);
 
     private:
-        static constexpr int _prioTarget = 10;
-        static constexpr int _prioBuffer = 9;
+        uint32      _ramBound{};
+        uint32      _payloadSize{};
+        Bytes       _ramPayload;
+        std::string _fsPayloadPath;
+        std::FILE*  _fsPayload{};
     };
 }

@@ -142,7 +142,9 @@ namespace dci::aup
 
             for(const auto& kv : c.equal_range("target"))
             {
-                _targetCriterias.push_back(instance::Criteria::parse(kv.second));
+                instance::Criteria criteria = instance::Criteria::parse(kv.second);
+                _targetCriterias.push_back(criteria);
+                _bufferCriterias.emplace_back(std::move(criteria));
             }
 
             for(const auto& kv : c.equal_range("buffer"))

@@ -400,12 +400,6 @@ namespace dci::module::net::stream
 
             totalWrote += wrote;
             _sendBuffer.drop(wrote);
-
-            if(wrote < _sendBuffer.bufsSize())
-            {
-                _lastReadyState &= ~poll::descriptor::rsf_write;
-                break;
-            }
         }
 
         if(!preCloseMode && totalWrote)

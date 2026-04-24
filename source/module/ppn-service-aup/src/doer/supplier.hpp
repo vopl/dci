@@ -11,35 +11,19 @@
 #pragma once
 
 #include "pch.hpp"
+#include "supplier/transfer.hpp"
 
-namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer::base
+namespace dci::module::ppn::service::aup::doer
 {
-    class Downloader;
-    class Remote;
-
-    namespace remote
-    {
-        using Api = api_legacy_since_2025_04::Supplier<>;
-        using Ptr = std::unique_ptr<Remote>;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    class Remote
+    class Supplier
     {
     public:
-        Remote(remote::Api&& api);
-        ~Remote();
-
-        sbs::Owner& sol();
-        const remote::Api& api();
-
-        void uninvolved();
-        void involve(Downloader* d);
-        void uninvolve(Downloader* d);
+        Supplier(const api::Supplier<>::Opposite& api);
+        ~Supplier();
 
     private:
-        sbs::Owner          _sbsOwner;
-        remote::Api         _api;
-        Set<Downloader*>    _downloaders;
+        sbs::Owner                  _sol;
+        api::Supplier<>::Opposite   _api;
+        supplier::Transfer          _transfer;
     };
 }

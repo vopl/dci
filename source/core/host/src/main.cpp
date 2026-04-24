@@ -40,6 +40,9 @@
 #   include <psapi.h>
 #   include <dbghelp.h>
 #   include <winnt.h>
+#else
+#   include <sys/types.h>
+#   include <dirent.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -336,6 +339,31 @@ static int afterAupApplied(bool restart, std::vector<std::string> argv)
         c_argv.push_back(arg.data());
     }
     c_argv.push_back(nullptr);
+
+#ifndef _WIN32
+    {
+        std::deque<int> fds;
+        {
+            DIR* dir = ::opendir("/proc/self/fd");
+            while(dirent* de = ::readdir(dir))
+            {
+                if(DT_LNK == de->d_type)
+                {
+                    if(int fd = ::atoi(de->d_name); 3 <= fd)
+                    {
+                        fds.emplace_back(fd);
+                    }
+                }
+            }
+            ::closedir(dir);
+        }
+
+        for(int fd : fds)
+        {
+            ::close(fd);
+        }
+    }
+#endif
 
     if(execv(executablePath.string().c_str(), c_argv.data()))
     {

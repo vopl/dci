@@ -12,39 +12,30 @@
 
 #include "pch.hpp"
 
-namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer::base
+namespace dci::module::ppn::service::aup::doer::supplier
 {
-    class Downloader;
-
-    class Quota
+    class Transfer
     {
     public:
-        Quota(std::size_t slots_=1);
-        ~Quota();
+        Transfer();
+        ~Transfer();
 
-        void clear();
-
-        void setSlots(std::size_t v);
-
-        void ready(Downloader* downloader);
-        void done(Downloader* downloader);
+        void start(const Oid& oid, api::BlobTransfer<>::Opposite&& api);
 
     private:
-        void update();
+        void notifyBlobTransfersAvailable(const Oid& oid);
 
     private:
-        std::size_t _slots;
+        sbs::Owner _sol;
 
-    private:
-        struct QueueCmp
+        struct BlobTransferState
         {
-            bool operator()(Downloader*a, Downloader*b) const;
+            sbs::Owner  _sol;
+            bool        _waitAvailability{};
         };
 
-        using Queue = std::set<Downloader*, QueueCmp>;
-        Queue _ready;
-
-        using Set = std::set<Downloader*>;
-        Set _inprogress;
+        using BlobTransfers = std::map<api::BlobTransfer<>::Opposite, BlobTransferState>;
+        using Oid2BlobTransfers = std::map<Oid, BlobTransfers>;
+        Oid2BlobTransfers _oid2BlobTransfers;
     };
 }

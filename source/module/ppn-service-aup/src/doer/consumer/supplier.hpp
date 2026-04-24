@@ -12,35 +12,14 @@
 
 #include "pch.hpp"
 
-namespace dci::module::ppn::service::aup_legacy_since_2025_04::consumer::base
+namespace dci::module::ppn::service::aup::doer::consumer
 {
-    class RecvBuffer
+    struct Supplier
     {
-        RecvBuffer(const RecvBuffer&) = delete;
-        RecvBuffer(RecvBuffer&&) = delete;
+        link::Id    _rid;
+        std::size_t _number{};
 
-        void operator=(const RecvBuffer&) = delete;
-        void operator=(RecvBuffer&&) = delete;
-
-    public:
-        RecvBuffer(uint32 ramBound);
-        ~RecvBuffer();
-
-        bool                        push(Bytes&& payload);
-        uint32                      payloadSize();
-        bool                        hasFile();
-        Bytes                       detachBytes();
-        std::FILE*                  getFile();
-        void                        reset();
-
-    private:
-        bool pushFs(Bytes&& payload);
-
-    private:
-        uint32      _ramBound{};
-        uint32      _payloadSize{};
-        Bytes       _ramPayload;
-        std::string _fsPayloadPath;
-        std::FILE*  _fsPayload{};
+        mutable api::Supplier<> _api;
+        mutable sbs::Owner      _sol;
     };
 }
