@@ -8,92 +8,81 @@
 // e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
-#include "awaking.hpp"
+#include "fiberPool.hpp"
+#include <dci/utils/atScopeExit.hpp>
 
 namespace dci::poll::impl
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Awaking::Awaking()
+    FiberPool::FiberPool()
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Awaking::~Awaking()
+    FiberPool::~FiberPool()
     {
-        std::scoped_lock lock{_mtx};
-        dbgAssert(_awakers.empty());
-        dbgAssert(_awakersReady.empty());
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Awaking::install(Awaker* awaker)
+    void FiberPool::start()
     {
-        std::scoped_lock lock{_mtx};
-        dbgAssert(!_awakers.contains(awaker));
-        dbgAssert(!_awakersReady.contains(awaker));
-        _awakers.pushBack(awaker);
+        if(_stop)
+            _stop = false;
 
-        if(awaker->keepLoop())
-        {
-            ++_keepLoop;
-        }
+        spawnFiberIfNeed();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Awaking::uninstall(Awaker* awaker)
+    sbs::Signal<> FiberPool::execInFiber()
     {
-        std::scoped_lock lock{_mtx};
-        dbgAssert(_awakers.contains(awaker));
-        _awakers.remove(awaker);
-
-        if(awaker->ready())
-            _awakersReady.remove(awaker);
-
-        if(awaker->keepLoop())
-        {
-            dbgAssert(0 < _keepLoop);
-            --_keepLoop;
-        }
+        return _execInFiber.out();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Awaking::ready(Awaker* awaker)
+    void FiberPool::needExecInFiber()
     {
-        std::scoped_lock lock{_mtx};
-        dbgAssert(_awakers.contains(awaker));
-        dbgAssert(!_awakersReady.contains(awaker));
-        _awakersReady.pushBack(awaker);
+        _needExecInFiber.raise();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Awaking::unready(Awaker* awaker)
+    bool FiberPool::spawnFiberIfNeed()
     {
-        std::scoped_lock lock{_mtx};
-        dbgAssert(_awakers.contains(awaker));
-        dbgAssert(_awakersReady.contains(awaker));
-        _awakersReady.remove(awaker);
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Awaking::woken()
-    {
-        std::scoped_lock lock{_mtx};
-        if(_awakersReady.empty())
-        {
+        if(_stop || _fibersCount > _busyCount)
             return false;
-        }
 
-        _awakersReady.each([](Awaker* awaker)
-        {
-            awaker->emitWokenIfNeed();
-        });
+        ++_fibersCount;
+        cmt::spawn() += _tol * [this]{ fiber(); };
         return true;
     }
 
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Awaking::hasPayload() const
+    void FiberPool::stop()
     {
-        std::scoped_lock lock{_mtx};
-        return !!_keepLoop;
+        _stop = true;
+        _needExecInFiber.raise();
+        _tol.flush(false);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void FiberPool::fiber()
+    {
+        auto cleaner{utils::AtScopeExit{[&]
+        {
+            --_fibersCount;
+            if(_stop)
+                _needExecInFiber.raise();
+        }}};
+
+        std::size_t busyCountInitial{_busyCount};
+        while(!_stop && busyCountInitial <= _busyCount)
+        {
+            _needExecInFiber.wait();
+
+            ++_busyCount;
+            auto unbusy{utils::AtScopeExit{[&]{ --_busyCount; }}};
+
+            _execInFiber.in();
+        }
     }
 }

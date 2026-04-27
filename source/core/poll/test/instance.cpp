@@ -72,15 +72,8 @@ TEST(poll, instance)
             EXPECT_FALSE(ec);
         };
 
-        {
-            dci::sbs::Owner doSomeWorkOwner;
-            dci::poll::doSomeWork() += doSomeWorkOwner * [&]
-            {
-                return dci::cmt::executeReadyFibers();
-            };
-            ec = run();
-            EXPECT_FALSE(ec);
-        }
+        ec = run();
+        EXPECT_FALSE(ec);
 
         ec = deinitialize();
         EXPECT_FALSE(ec);

@@ -17,18 +17,26 @@ namespace dci::poll::impl
 {
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Polling::Polling()
+    Polling::Polling(FiberPool& fiberPool)
+        : _fiberPool{fiberPool}
     {
+        _fiberPool.execInFiber() += _sol * [&]
+        {
+            while(Descriptor* descriptor = _descriptorsReady.popFront())
+                descriptor->emitReady();
+        };
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Polling::~Polling()
     {
+        _sol.flush();
+
         _descriptors.flush([](Descriptor* d)
         {
             d->close(false);
-            d->setReadyState(descriptor::rsf_error);
         });
+        _descriptorsReady.clear();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -54,7 +62,7 @@ namespace dci::poll::impl
         }
 
         dbgAssert(!_descriptors.contains(d));
-        _descriptors.push(d);
+        _descriptors.pushBack(d);
 
         return ec;
     }
@@ -64,8 +72,8 @@ namespace dci::poll::impl
     {
         std::error_code ec = _engine.uninstallDescriptor(d);
 
-        if(d->emplaced())
-            _descriptors.remove(d);
+        d->utils::IntrusiveDlistElement<Descriptor, DescriptorTag4Polling>::retire();
+        d->utils::IntrusiveDlistElement<Descriptor, DescriptorTag4Ready>::retire();
 
         return ec;
     }
@@ -73,7 +81,12 @@ namespace dci::poll::impl
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::error_code Polling::execute(clocking::Duration timeout)
     {
-        return _engine.execute(timeout);
+        std::error_code ec = _engine.execute(timeout, _descriptorsReady);
+
+        if(!_descriptorsReady.empty())
+            _fiberPool.needExecInFiber();
+
+        return ec;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

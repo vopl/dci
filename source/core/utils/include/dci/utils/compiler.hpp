@@ -14,7 +14,7 @@
 #define unlikely(x) (x)
 
 //TODO: use std::unreachable instead
-#define unreacheable() dci::utils::unreacheableImpl()
+#define unreacheable() ::dci::utils::unreacheableImpl()
 
 namespace dci::utils
 {

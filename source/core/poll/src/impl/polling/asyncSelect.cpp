@@ -182,8 +182,9 @@ namespace dci::poll::impl::polling
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    std::error_code AsyncSelect::execute(clocking::Duration timeout)
+    std::error_code AsyncSelect::execute(clocking::Duration timeout, utils::IntrusiveDlist<Descriptor, DescriptorTag4Ready>& descriptorsReady)
     {
+        _descriptorsReady = &descriptorsReady;
         if(!_messages.empty())
         {
             while(!_wakeup.load(std::memory_order_acquire) && !_messages.empty())
@@ -289,6 +290,12 @@ namespace dci::poll::impl::polling
 
                 Descriptor* d = iter->_descriptor;
                 d->setReadyState(readyState);
+
+                dbgAssert(_descriptorsReady);
+                if(!d->utils::IntrusiveDlistElement<Descriptor, DescriptorTag4Ready>::emplaced())
+                {
+                    _descriptorsReady->pushBack(d);
+                }
             }
 
             return 0;

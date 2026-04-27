@@ -15,19 +15,13 @@ namespace dci::poll
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Descriptor::Descriptor(Native native)
-        : FaceLayout{native, nullptr, nullptr}
-    {
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Descriptor::Descriptor(Native native, cmt::task::Owner* actOwner)
-        : FaceLayout{native, actOwner, nullptr}
+        : FaceLayout{native, nullptr}
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Descriptor::Descriptor(Native native, cmt::Raisable* raisable)
-        : FaceLayout{native, nullptr, raisable}
+        : FaceLayout{native, raisable}
     {
     }
 
@@ -43,27 +37,9 @@ namespace dci::poll
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Descriptor::emitReadyIfNeed()
-    {
-        return impl().emitReadyIfNeed();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Descriptor::emitReady()
     {
         return impl().emitReady();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Descriptor::setReadyOwner(cmt::task::Owner* actOwner)
-    {
-        return impl().setReadyOwner(actOwner);
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Descriptor::resetReadyOwner()
-    {
-        return impl().resetReadyOwner();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -100,6 +76,12 @@ namespace dci::poll
     Descriptor::operator Native() const
     {
         return impl().native();
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::error_code Descriptor::shutdown(bool input, bool output)
+    {
+        return impl().shutdown(input, output);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

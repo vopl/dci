@@ -20,16 +20,7 @@ namespace utils
     inline void complexRun()
     {
         EXPECT_FALSE(dci::poll::initialize());
-
-        {
-            dci::sbs::Owner doSomeWorkOwner;
-            dci::poll::doSomeWork() += doSomeWorkOwner * [&]
-            {
-                return dci::cmt::executeReadyFibers();
-            };
-            EXPECT_FALSE(dci::poll::run());
-        }
-
+        EXPECT_FALSE(dci::poll::run());
         EXPECT_FALSE(dci::poll::deinitialize());
     }
 }

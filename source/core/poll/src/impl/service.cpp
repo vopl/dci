@@ -12,11 +12,14 @@
 #include <dci/poll/descriptor.hpp>
 #include <dci/poll/error.hpp>
 #include <dci/cmt.hpp>
+#include <dci/utils/atScopeExit.hpp>
 
 namespace dci::poll::impl
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Service::Service()
+        : _clocking{_fiberPool}
+        , _polling{_fiberPool}
     {
     }
 
@@ -44,6 +47,12 @@ namespace dci::poll::impl
             return error::not_initialized;
         }
 
+        _fiberPool.start();
+        auto fiberPoolStopper{utils::AtScopeExit{[&]
+        {
+            _fiberPool.stop();
+        }}};
+
         _stop = false;
 
         if(emitStartedStopped)
@@ -55,11 +64,12 @@ namespace dci::poll::impl
         {
             _clocking.fireTicks();
 
-            bool someWorkDone = false;
-            if(_doSomeWork.connected())
-                someWorkDone = _doSomeWork.in();
+            if(cmt::executeReadyFibers())
+            {
+                continue;
+            }
 
-            if(someWorkDone && _clocking.fireTicks())
+            if(_fiberPool.spawnFiberIfNeed())
             {
                 continue;
             }
@@ -69,14 +79,10 @@ namespace dci::poll::impl
                 continue;
             }
 
-            if(someWorkDone)
-            {
-                continue;
-            }
-
             if(!_polling.hasPayload() && !_clocking.hasPayload() && !_awaking.hasPayload())
             {
                 _stop = true;
+                fiberPoolStopper.execute();
                 break;
             }
 
@@ -86,8 +92,7 @@ namespace dci::poll::impl
                 continue;
             }
 
-            auto ec = _polling.execute(timeout);
-            if(ec)
+            if(std::error_code ec = _polling.execute(timeout))
             {
                 if(ec == std::errc::interrupted)
                 {
@@ -105,12 +110,15 @@ namespace dci::poll::impl
                     _stopped.in();
                 }
 
+                fiberPoolStopper.execute();
+                cmt::executeReadyFibers();
                 return ec;
             }
         }
 
-        if(_doSomeWork.connected())
-            _doSomeWork.in();
+        dbgAssert(_stop);
+        fiberPoolStopper.execute();
+        cmt::executeReadyFibers();
 
         if(emitStartedStopped)
         {
@@ -124,12 +132,6 @@ namespace dci::poll::impl
     sbs::Signal<> Service::started()
     {
         return _started.out();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    sbs::Signal<bool> Service::doSomeWork()
-    {
-        return _doSomeWork.out();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

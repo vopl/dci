@@ -135,7 +135,15 @@ namespace dci::module::net::stream
         {
             unlink(l->address.data());
         }
-        _sock.close();
+
+        if(_sock.valid())
+        {
+            _sock.close();
+            methods()->closed();
+        }
+
+        _bindEndpoint = {};
+        _localEndpoint = {};
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

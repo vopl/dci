@@ -79,7 +79,6 @@ namespace dci::module::ppn::transport::natt::mapper::netBased
         net::IpAddress              _clientAddr;
         net::Endpoint               _srvEp;
 
-        cmt::task::Owner            _tol;
         poll::Timer                 _revealTicker;
         std::size_t                 _revealDepth {};
 

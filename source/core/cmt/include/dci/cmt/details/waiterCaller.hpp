@@ -234,10 +234,16 @@ namespace dci::cmt::details
 
         static WWLink* init(void* mem, std::size_t size)
         {
-            static_assert(std::is_trivially_copyable_v<WWLink>);
             WWLink* data = static_cast<WWLink*>(mem);
             for(std::size_t i{}; i<size; ++i)
-                data[i] = WWLink{};
+                new (data+i) WWLink{};
+            return data;
+        }
+
+        static void* deinit(WWLink* data, std::size_t size)
+        {
+            for(std::size_t i{}; i<size; ++i)
+                data[i].~WWLink();
             return data;
         }
 
@@ -259,8 +265,10 @@ namespace dci::cmt::details
 
         ~Links()
         {
-            if constexpr(!useExtMem)
-                mm::heap::free(_data);
+            if constexpr(useExtMem)
+                deinit(_data, _size);
+            else
+                mm::heap::free(deinit(_data, _size));
         }
     };
 

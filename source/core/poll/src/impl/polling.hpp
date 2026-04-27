@@ -11,6 +11,7 @@
 #pragma once
 
 #include "descriptor.hpp"
+#include "fiberPool.hpp"
 
 #include <dci/utils/intrusiveDlist.hpp>
 
@@ -28,7 +29,7 @@ namespace dci::poll::impl
     class Polling
     {
     public:
-        Polling();
+        Polling(FiberPool& fiberPool);
         ~Polling();
 
         std::error_code initialize();
@@ -47,7 +48,13 @@ namespace dci::poll::impl
         bool hasPayload() const;
 
     private:
-        utils::IntrusiveDlist<Descriptor> _descriptors;
+        sbs::Owner              _sol;
+        FiberPool&              _fiberPool;
+
+        utils::IntrusiveDlist<Descriptor, DescriptorTag4Polling>
+                                _descriptors;
+        utils::IntrusiveDlist<Descriptor, DescriptorTag4Ready>
+                                _descriptorsReady;
 
 #ifdef _WIN32
         polling::AsyncSelect    _engine;

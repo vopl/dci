@@ -44,7 +44,7 @@ namespace dci::module::ppn::transport::natt::mapper::awsEc2
 
     private:
         cmt::task::Owner    _tol;
-        poll::Timer         _revealTicker{std::chrono::minutes{10}, true, [this]{reveal();}, &_tol};
+        poll::Timer         _revealTicker{std::chrono::minutes{10}, true, [this]{reveal();}};
         std::size_t         _revealDepth {};
 
     };

@@ -56,7 +56,7 @@ TEST(poll, descriptor_badFd)
             EXPECT_TRUE(0 == d.readyState());
             callbackActivated = true;
         };
-        d.emitReadyIfNeed();
+        d.emitReady();
 
         dci::cmt::yield();
         EXPECT_TRUE(callbackActivated);
@@ -88,68 +88,18 @@ TEST(poll, descriptor_fd)
 }
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-TEST(poll, descriptor_close)
+TEST(poll, descriptor_closed)
 {
-    //close
+    //close on destoy
     dci::cmt::spawn() += []
     {
         descriptor::Native fd = socket(AF_UNIX, SOCK_STREAM/*|SOCK_NONBLOCK*/, 0);
 
-        Descriptor d{fd};
-
-        EXPECT_TRUE(d.valid());
-        EXPECT_FALSE(d.error());
-
-        bool eofNotified = false;
-        d.ready() += [&](descriptor::Native /*native*/, descriptor::ReadyStateFlags readyState)
         {
-            EXPECT_TRUE(readyState & descriptor::rsf_eof);
-            eofNotified = true;
-        };
-
-        EXPECT_TRUE(!eofNotified);
-        d.close();
-        dci::cmt::yield();
-        EXPECT_TRUE(eofNotified);
-
-
-        Descriptor d2{fd};//already closed
-        EXPECT_TRUE(d2.error());
-
-        EXPECT_TRUE(d2.readyState() & descriptor::rsf_error);
-        EXPECT_TRUE(d2.readyState() & descriptor::rsf_eof);
-    };
-
-    utils::complexRun();
-}
-
-/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-TEST(poll, descriptor_closeOnDestroy)
-{
-    //close on destoy, notification
-    dci::cmt::spawn() += []
-    {
-        descriptor::Native fd = socket(AF_UNIX, SOCK_STREAM/*|SOCK_NONBLOCK*/, 0);
-
-        bool eofNotified = false;
-        dci::cmt::task::Owner taskOwner;
-        {
-            Descriptor d
-            {
-                fd,
-                [&](descriptor::Native /*native*/, descriptor::ReadyStateFlags readyState)
-                {
-                    EXPECT_TRUE(readyState & descriptor::rsf_eof);
-                    eofNotified = true;
-                },
-                &taskOwner
-            };
-
+            Descriptor d{fd};
             EXPECT_TRUE(d.valid());
             EXPECT_FALSE(d.error());
         }
-        dci::cmt::yield();
-        EXPECT_TRUE(eofNotified);
 
         Descriptor d{fd};//already closed
         EXPECT_TRUE(d.error());

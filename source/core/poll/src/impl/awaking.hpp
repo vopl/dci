@@ -33,7 +33,7 @@ namespace dci::poll::impl
         bool hasPayload() const;
 
     private:
-        mutable std::recursive_mutex _mtx;
+        mutable std::recursive_mutex                _mtx;
         utils::IntrusiveDlist<Awaker, TagForAll>    _awakers;
         std::size_t                                 _keepLoop{};
         utils::IntrusiveDlist<Awaker, TagForReady>  _awakersReady;

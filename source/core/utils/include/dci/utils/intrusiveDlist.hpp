@@ -22,12 +22,16 @@ namespace dci::utils
     {
         IntrusiveDlistElement();
         IntrusiveDlistElement(IntrusiveDlistElement<T, Tag>* prev, IntrusiveDlistElement<T, Tag>* next);
+        ~IntrusiveDlistElement();
 
         bool emplaced() const;
+        void retire();
 
         IntrusiveDlistElement* prev() const;
         IntrusiveDlistElement* next() const;
 
+        T* selfT();
+        const T* selfT() const;
         T* prevT() const;
         T* nextT() const;
 
@@ -39,9 +43,8 @@ namespace dci::utils
         void setNext(IntrusiveDlistElement* next);
 
     private:
-        using Int = std::uintptr_t;
-        Int _prev{};
-        Int _next{};
+        IntrusiveDlistElement* _prev{};
+        IntrusiveDlistElement* _next{};
     };
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -70,8 +73,10 @@ namespace dci::utils
     public:
         IntrusiveDlist();
         IntrusiveDlist(T* element);
+        IntrusiveDlist(IntrusiveDlistElement<T, Tag>* idee);
         IntrusiveDlist(RemoveCleaner&& removeCleaner);
         IntrusiveDlist(T* element, RemoveCleaner&& removeCleaner);
+        IntrusiveDlist(IntrusiveDlistElement<T, Tag>* idee, RemoveCleaner&& removeCleaner);
 
         template <class Tag2, class RC2>
         IntrusiveDlist(IntrusiveDlist<T, Tag2, RC2>&& from);
@@ -87,8 +92,8 @@ namespace dci::utils
         T* last() const;
         std::pair<T*, T*> range() const;
         bool contains(T* element) const;
-        void push(T* element);
-        T* shift();
+        void pushBack(T* element);
+        T* popFront();
         void remove(T* element);
 
         void clear();
@@ -97,14 +102,10 @@ namespace dci::utils
         void each(F&& f);
 
         template <class F>
-        void each(F&& f) const;
-
-        template <class F>
         void flush(F&& f);
 
     private:
-        IntrusiveDlistElement<T, Tag>* _first{};
-        IntrusiveDlistElement<T, Tag>* _last{};
+        IntrusiveDlistElement<T, Tag> _center{&_center, &_center};
     };
 }
 

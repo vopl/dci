@@ -10,21 +10,31 @@
 
 #include "clocking.hpp"
 
-#include <iostream>
-
 namespace dci::poll::impl
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Clocking::Clocking()
-        : _now(exactNow())
+    Clocking::Clocking(FiberPool& fiberPool)
+        : _fiberPool{fiberPool}
+        , _now(exactNow())
         , _nearestPoint(_now)
         , _readyBucket(&_readyAmount, _bucketsAmount-1, 0)
     {
+        _fiberPool.execInFiber() += _sol * [&]
+        {
+            _readyBucket.flush([&](clocking::BucketElement* bucketElement)
+            {
+                _readyAmountPrev = _readyAmount;
+
+                Timer* t = static_cast<Timer*>(bucketElement);
+                t->tick(_now);
+            });
+        };
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Clocking::~Clocking()
     {
+        _sol.flush();
         dbgAssert(!hasPayload());
     }
 
@@ -48,6 +58,7 @@ namespace dci::poll::impl
         if(t->nextPoint() <= _now)
         {
             _readyBucket.insert(t);
+            flushReady();
             return;
         }
 
@@ -82,29 +93,14 @@ namespace dci::poll::impl
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     bool Clocking::fireTicks()
     {
-        PointRep now = exactNow();
+        std::size_t readyAmountPrev{_readyAmount};
 
+        PointRep now = exactNow();
         _nearestPoint = rollBucketsTo(now);
 
         dbgAssert(_now == now);
 
-        bool res;
-        {
-            std::size_t flushAmount = 0;
-            clocking::Bucket flushBucket(&flushAmount, _bucketsAmount-1, 0);
-            _readyBucket.flushTo(&flushBucket);
-            res = !!flushAmount;
-
-            flushBucket.flush([&](clocking::BucketElement* el)
-            {
-                dbgAssert(el->_point <= now);
-
-                Timer* t = static_cast<Timer*>(el);
-                t->tick(now);
-            });
-        }
-
-        return res;
+        return readyAmountPrev != _readyAmount;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -175,6 +171,8 @@ namespace dci::poll::impl
             }
         }
 
+        flushReady();
+
         dbgAssert(nearestPoint > _now);
         return nearestPoint;
     }
@@ -208,5 +206,15 @@ namespace dci::poll::impl
         }
 
         return bucket.get();
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Clocking::flushReady()
+    {
+        if(_readyAmountPrev != _readyAmount)
+        {
+            _readyAmountPrev = _readyAmount;
+            _fiberPool.needExecInFiber();
+        }
     }
 }

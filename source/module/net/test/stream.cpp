@@ -38,6 +38,7 @@ struct State
     Host<> netHost = manager->createService<Host<>>().value();
 
     stream::Server<> srv = netHost->streamServer().value();
+    std::deque<stream::Client<>> srvChannels;
     stream::Client<> cln = netHost->streamClient().value();
     Endpoint srvEndpoint;
 
@@ -45,6 +46,10 @@ struct State
     {
         EXPECT_NO_THROW((srv->listen(Ip4Endpoint{{127,0,0,1}, 0})));
         srvEndpoint = srv->localEndpoint().value();
+        srv->accepted() += [this](stream::Channel<>&& srvChannel)
+        {
+            srvChannels.emplace_back(std::move(srvChannel));
+        };
     }
 };
 
@@ -61,8 +66,10 @@ TEST(module_net, stream_serverListen)
     EXPECT_NO_THROW((state.srv->localEndpoint().value()));
     EXPECT_EQ((state.srv->localEndpoint().value()).get<Ip4Endpoint>().address.octets, (Array<uint8, 4>{127,0,0,1}));
     EXPECT_NE((state.srv->localEndpoint().value()).get<Ip4Endpoint>().port, 0u);
+
+    dci::utils::S2f s2fClosed{state.srv->closed()};
     state.srv->close();
-    dci::utils::S2f{state.srv->closed()}.wait();
+    s2fClosed.wait();
 
     //data dropped after close
     EXPECT_NO_THROW((state.srv->localEndpoint().value()));

@@ -33,10 +33,9 @@
 namespace dci::poll::impl
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Descriptor::Descriptor(Native native, cmt::task::Owner* readyOwner, cmt::Raisable* raisable)
+    Descriptor::Descriptor(Native native, cmt::Raisable* raisable)
         : _native{native}
-        , _readyOwner{(readyOwner ? readyOwner : &_localReadyOwner)}
-        , _raisable{raisable}
+        , _readyRaisable{raisable}
     {
         if(valid())
         {
@@ -48,9 +47,9 @@ namespace dci::poll::impl
             }
         }
 
-        if(_readyState && _raisable)
+        if(_readyState && _readyRaisable)
         {
-            _raisable->raise();
+            _readyRaisable->raise();
         }
     }
 
@@ -58,79 +57,46 @@ namespace dci::poll::impl
     Descriptor::~Descriptor()
     {
         close();
-        _localReadyOwner.stop();
-        _ready->_owner = {};
-        _ready.reset();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     sbs::Signal<void, descriptor::Native /*native*/, descriptor::ReadyStateFlags /*readyState*/> Descriptor::ready()
     {
-        return _ready->_wire.out();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Descriptor::emitReadyIfNeed()
-    {
-        if(ReadyStateFlags::rsf_null != _readyState && !_ready->_inProgress)
-        {
-            emitReady();
-        }
+        return _readyWire.out();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Descriptor::emitReady()
     {
-        if(_ready && _ready->_wire.connected())
+        if(_readyState)
         {
-            ReadyStateFlags readyState = _readyState;
-            _readyState = {};
-            _ready->_inProgress = true;
-            cmt::spawn() += _readyOwner * [native{_native}, readyState, ready{_ready}]
+            if(_readyWire.connected())
             {
-                {
-                    dci::utils::AtScopeExit cleaner{[&]{ready->_inProgress=false;}};
-                    ready->_wire.in(native, readyState);
-                }
-
-                if(ready->_owner)
-                    ready->_owner->emitReadyIfNeed();
-            };
+                ReadyStateFlags readyState = std::exchange(_readyState, {});
+                _readyWire.in(_native, readyState);
+            }
+            else if(_readyRaisable)
+            {
+                _readyRaisable->raise();
+            }
         }
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Descriptor::setReadyOwner(cmt::task::Owner* readyOwner)
-    {
-        if(readyOwner != _readyOwner)
-        {
-            _readyOwner->stop();
-        }
-        _readyOwner = readyOwner ? readyOwner : &_localReadyOwner;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Descriptor::resetReadyOwner()
-    {
-        _localReadyOwner.stop();
-        _readyOwner = &_localReadyOwner;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Descriptor::setRaisable(cmt::Raisable* raisable)
     {
-        _raisable = raisable;
-        dbgAssert(_raisable);
+        _readyRaisable = raisable;
+        dbgAssert(_readyRaisable);
 
-        if(_readyState && _raisable)
+        if(_readyState && _readyRaisable)
         {
-            _raisable->raise();
+            _readyRaisable->raise();
         }
     }
 
     void Descriptor::resetRaisable()
     {
-        _raisable = {};
+        _readyRaisable = {};
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -174,6 +140,34 @@ namespace dci::poll::impl
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::error_code Descriptor::shutdown(bool input, bool output)
+    {
+        std::error_code ec;
+        if(valid() && (input | output))
+        {
+            int how;
+#ifdef WIN32
+#   define SHUT_RDWR SD_BOTH
+#   define SHUT_RD SD_RECEIVE
+#   define SHUT_WR SD_SEND
+#endif
+            if(input && output)
+                how = SHUT_RDWR;
+            else if(input)
+                how = SHUT_RD;
+            else
+                how = SHUT_WR;
+
+            if(0 != ::shutdown(_native, how))
+            {
+                ec = std::error_code{errno, std::generic_category()};
+            }
+        }
+
+        return ec;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::error_code Descriptor::close(bool withUninstall)
     {
         std::error_code ec;
@@ -190,14 +184,8 @@ namespace dci::poll::impl
                 ec = utils::win32::error::make(closeRes);
             }
 #else
-            int closeRes = ::close(_native);
-            while(0 != closeRes && EINTR == errno)
-            {
-                //try again
-                closeRes = ::close(_native);
-            }
-
-            if(closeRes)
+            int res = ::close(_native);
+            if(res)
             {
                 ec = std::error_code{errno, std::generic_category()};
             }
@@ -264,13 +252,6 @@ namespace dci::poll::impl
     void Descriptor::setReadyState(ReadyStateFlags flags)
     {
         _readyState |= flags;
-
-        emitReadyIfNeed();
-
-        if(_readyState && _raisable)
-        {
-            _raisable->raise();
-        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

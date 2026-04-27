@@ -33,17 +33,12 @@ namespace dci::poll
 
     public:
         Descriptor(Native native = {});
-        Descriptor(Native native, auto&& onReady, cmt::task::Owner* readyOwner = nullptr) requires(std::invocable<decltype(onReady)&&, Native, ReadyStateFlags>);
-        Descriptor(Native native, cmt::task::Owner* readyOwner);
+        Descriptor(Native native, auto&& onReady) requires(std::invocable<decltype(onReady)&&, Native, ReadyStateFlags>);
         Descriptor(Native native, cmt::Raisable* raisable);
         ~Descriptor();
 
         sbs::Signal<void, Native /*native*/, ReadyStateFlags /*readyState*/> ready();
-        void emitReadyIfNeed();
         void emitReady();
-
-        void setReadyOwner(cmt::task::Owner* readyOwner);
-        void resetReadyOwner();
 
         void setRaisable(cmt::Raisable* raisable);
         void resetRaisable();
@@ -54,6 +49,7 @@ namespace dci::poll
         Native native() const;
         operator Native() const;
 
+        std::error_code shutdown(bool input, bool output);
         std::error_code close();
         std::error_code attach(Native native);
         std::error_code detach();
@@ -63,10 +59,10 @@ namespace dci::poll
     };
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Descriptor::Descriptor(Native native, auto&& onReady, cmt::task::Owner* readyOwner) requires(std::invocable<decltype(onReady)&&, descriptor::Native, descriptor::ReadyStateFlags>)
-        : Descriptor{native, readyOwner}
+    Descriptor::Descriptor(Native native, auto&& onReady) requires(std::invocable<decltype(onReady)&&, descriptor::Native, descriptor::ReadyStateFlags>)
+        : Descriptor{native}
     {
         this->ready() += std::forward<decltype(onReady)>(onReady);
-        emitReadyIfNeed();
+        emitReady();
     }
 }

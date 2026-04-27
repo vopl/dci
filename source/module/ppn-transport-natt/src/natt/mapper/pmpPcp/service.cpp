@@ -37,7 +37,6 @@ namespace dci::module::ppn::transport::natt::mapper::pmpPcp
         _l->deactivate(this);
         _clientSol.flush();
         _client.reset();
-        _tol.stop();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

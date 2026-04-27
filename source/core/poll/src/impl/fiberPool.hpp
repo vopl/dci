@@ -10,16 +10,34 @@
 
 #pragma once
 
-#include "api.hpp"
-#include <system_error>
-#include <dci/sbs/signal.hpp>
+#include <dci/sbs.hpp>
+#include <dci/cmt.hpp>
 
-namespace dci::poll
+namespace dci::poll::impl
 {
-    API_DCI_POLL std::error_code    initialize();
-    API_DCI_POLL std::error_code    run(bool emitStartedStopped = true);
-    API_DCI_POLL sbs::Signal<>      started();
-    API_DCI_POLL std::error_code    stop();
-    API_DCI_POLL sbs::Signal<>      stopped();
-    API_DCI_POLL std::error_code    deinitialize();
+    class FiberPool
+    {
+    public:
+        FiberPool();
+        ~FiberPool();
+
+        void start();
+
+        sbs::Signal<> execInFiber();
+        void needExecInFiber();
+        bool spawnFiberIfNeed();
+
+        void stop();
+
+    private:
+        void fiber();
+
+    private:
+        cmt::task::Owner    _tol;
+        cmt::Notifier       _needExecInFiber{cmt::WakeMode::one};
+        sbs::Wire<>         _execInFiber;
+        std::size_t         _fibersCount{};
+        std::size_t         _busyCount{};
+        bool                _stop{};
+    };
 }

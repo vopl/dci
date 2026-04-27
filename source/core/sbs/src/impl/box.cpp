@@ -193,7 +193,7 @@ namespace dci::sbs::impl
 #pragma GCC diagnostic ignored "-Wdangling-pointer"
 
         Enumerator enumerator {_first, _last};
-        _enumerators.push(&enumerator);
+        _enumerators.pushBack(&enumerator);
 
         {
 

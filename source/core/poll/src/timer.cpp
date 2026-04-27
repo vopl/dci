@@ -15,37 +15,25 @@ namespace dci::poll
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Timer::Timer(std::chrono::nanoseconds interval)
-        : himpl::FaceLayout<Timer, impl::Timer>{interval, false, nullptr, nullptr}
+        : himpl::FaceLayout<Timer, impl::Timer>{interval, false, nullptr}
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Timer::Timer(std::chrono::nanoseconds interval, bool repeatable)
-        : himpl::FaceLayout<Timer, impl::Timer>{interval, repeatable, nullptr, nullptr}
-    {
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Timer::Timer(std::chrono::nanoseconds interval, cmt::task::Owner* tickOwner)
-        : himpl::FaceLayout<Timer, impl::Timer>{interval, false, tickOwner, nullptr}
-    {
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Timer::Timer(std::chrono::nanoseconds interval, bool repeatable, cmt::task::Owner* tickOwner)
-        : himpl::FaceLayout<Timer, impl::Timer>{interval, repeatable, tickOwner, nullptr}
+        : himpl::FaceLayout<Timer, impl::Timer>{interval, repeatable, nullptr}
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Timer::Timer(std::chrono::nanoseconds interval, cmt::Raisable* raisable)
-        : himpl::FaceLayout<Timer, impl::Timer>{interval, false, nullptr, raisable}
+        : himpl::FaceLayout<Timer, impl::Timer>{interval, false, raisable}
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Timer::Timer(std::chrono::nanoseconds interval, bool repeatable, cmt::Raisable* raisable)
-        : himpl::FaceLayout<Timer, impl::Timer>{interval, repeatable, nullptr, raisable}
+        : himpl::FaceLayout<Timer, impl::Timer>{interval, repeatable, raisable}
     {
     }
 
@@ -58,18 +46,6 @@ namespace dci::poll
     sbs::Signal<> Timer::tick()
     {
         return impl().tick();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Timer::setTickOwner(cmt::task::Owner* tickOwner)
-    {
-        return impl().setTickOwner(tickOwner);
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Timer::resetTickOwner()
-    {
-        return impl().resetTickOwner();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

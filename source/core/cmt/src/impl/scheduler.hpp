@@ -44,7 +44,7 @@ namespace dci::cmt::impl
         bool yield(std::uint32_t rfk = rfk_any);
         void hold();
         void ready(ctx::Fiber* fiber);
-        bool executeReadyFibers();
+        std::size_t executeReadyFibers();
         bool switchTo(task::Body* task);
 
         using FiberEnumerationCallback = void(*)(cmt::task::State, void*);

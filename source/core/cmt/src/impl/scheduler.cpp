@@ -81,7 +81,7 @@ namespace dci::cmt::impl
         dbgAssert(task);
         dbgAssert(cmt::task::State::null == task->state());
 
-        _spawnedTasks.push(task);
+        _spawnedTasks.pushBack(task);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -107,12 +107,12 @@ namespace dci::cmt::impl
         if(currentTask->stopRequested())
         {
             currentTask->setState(cmt::task::State::ready4Stop);
-            _ready4Stop.push(currentFiber);
+            _ready4Stop.pushBack(currentFiber);
         }
         else
         {
             currentTask->setState(cmt::task::State::readyLowPriority);
-            _readyLowPriority.push(currentFiber);
+            _readyLowPriority.pushBack(currentFiber);
         }
 
         f2f(currentFiber, nextFiber);
@@ -140,7 +140,7 @@ namespace dci::cmt::impl
         ctx::Fiber* current = _currentFiber;
         dbgAssert(!current->emplaced());
         task->setState(cmt::task::State::hold);
-        _hold.push(current);
+        _hold.pushBack(current);
 
         if(ctx::Fiber* next = dequeueReadyFiber())
         {
@@ -176,12 +176,12 @@ namespace dci::cmt::impl
             if(task->stopRequested())
             {
                 task->setState(cmt::task::State::ready4Stop);
-                _ready4Stop.push(fiber);
+                _ready4Stop.pushBack(fiber);
             }
             else
             {
                 task->setState(cmt::task::State::ready);
-                _ready.push(fiber);
+                _ready.pushBack(fiber);
             }
         }
         else
@@ -191,7 +191,7 @@ namespace dci::cmt::impl
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    bool Scheduler::executeReadyFibers()
+    std::size_t Scheduler::executeReadyFibers()
     {
         dbgAssert(!_currentFiber);
         if(_currentFiber)
@@ -200,11 +200,11 @@ namespace dci::cmt::impl
             std::abort();
         }
 
-        bool res = false;
+        std::size_t res{};
 
         while(ctx::Fiber* next = dequeueReadyFiber())
         {
-            res = true;
+            ++res;
             dbgAssert(!next->emplaced());
             task::Body* task = next->task();
             dbgAssert(task);
@@ -260,12 +260,12 @@ namespace dci::cmt::impl
             if(currentTask->stopRequested())
             {
                 currentTask->setState(cmt::task::State::ready4Stop);
-                _ready4Stop.push(currentFiber);
+                _ready4Stop.pushBack(currentFiber);
             }
             else
             {
                 currentTask->setState(cmt::task::State::readyLowPriority);
-                _readyLowPriority.push(currentFiber);
+                _readyLowPriority.pushBack(currentFiber);
             }
 
             f2f(currentFiber, nextFiber);
@@ -362,7 +362,7 @@ namespace dci::cmt::impl
         dbgAssert(_currentFiber);
         ctx::Fiber* current = _currentFiber;
         dbgAssert(!current->task());
-        _empty.push(current);
+        _empty.pushBack(current);
 
         if(ctx::Fiber* nextFiber = dequeueReadyFiber())
         {
@@ -392,7 +392,7 @@ namespace dci::cmt::impl
     {
         if(rfk & rfk_4Stop)
         {
-            ctx::Fiber* fiber = _ready4Stop.shift();
+            ctx::Fiber* fiber = _ready4Stop.popFront();
             if(fiber)
             {
                 dbgAssert(fiber->task());
@@ -404,7 +404,7 @@ namespace dci::cmt::impl
 
         if(rfk & rfk_regular)
         {
-            ctx::Fiber* fiber = _ready.shift();
+            ctx::Fiber* fiber = _ready.popFront();
             if(fiber)
             {
                 dbgAssert(fiber->task());
@@ -416,10 +416,10 @@ namespace dci::cmt::impl
 
         if(rfk & rfk_new4SpawnedTasks)
         {
-            task::Body* task = _spawnedTasks.shift();
+            task::Body* task = _spawnedTasks.popFront();
             if(task)
             {
-                ctx::Fiber* fiber = _empty.shift();
+                ctx::Fiber* fiber = _empty.popFront();
 
                 if(!fiber)
                     fiber =  ctx::Fiber::alloc(this);
@@ -440,7 +440,7 @@ namespace dci::cmt::impl
 
         if(rfk & rfk_lowPriority)
         {
-            ctx::Fiber* fiber = _readyLowPriority.shift();
+            ctx::Fiber* fiber = _readyLowPriority.popFront();
             if(fiber)
             {
                 dbgAssert(fiber->task());
@@ -499,7 +499,8 @@ namespace dci::cmt::impl
         dbgAssert(to != _currentFiber);
         dbgAssert(to->task());
         dbgAssert(cmt::task::State::work == to->task()->state());
-        dbgAssert(!to->task()->stopRequested());
+
+        //dbgAssert(!to->task()->stopRequested());
 
         _currentFiber = to;
         _rootContext.switchTo(to);

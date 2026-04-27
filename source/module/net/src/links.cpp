@@ -116,8 +116,11 @@ namespace dci::module::net
 
         if(complete && _interfacesInitial.charged())
         {
-            _interfacesInitial.resolveValue(_interfaces);
-            _interfacesInitial.uncharge();
+            cmt::Promise<Interfaces> interfacesInitial{std::move(_interfacesInitial)};
+            if(!interfacesInitial.resolved())
+            {
+                interfacesInitial.resolveValue(_interfaces);
+            }
         }
 
         for(auto& p : added)

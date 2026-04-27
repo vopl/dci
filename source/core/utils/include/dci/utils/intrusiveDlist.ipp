@@ -33,23 +33,59 @@ namespace dci::utils
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag>
+    IntrusiveDlistElement<T, Tag>::~IntrusiveDlistElement()
+    {
+        retire();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    template <class T, class Tag>
     bool IntrusiveDlistElement<T, Tag>::emplaced() const
     {
-        return !!_prev;
+        return !!prev();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    template <class T, class Tag>
+    void IntrusiveDlistElement<T, Tag>::retire()
+    {
+        if(emplaced())
+        {
+            dbgAssert(this != next());
+            dbgAssert(this != prev());
+
+            next()->setPrev(prev());
+            prev()->setNext(next());
+            set({}, {});
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag>
     IntrusiveDlistElement<T, Tag>* IntrusiveDlistElement<T, Tag>::prev() const
     {
-        return reinterpret_cast<IntrusiveDlistElement<T, Tag>*>(_prev & ~Int{1});
+        return _prev;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag>
     IntrusiveDlistElement<T, Tag>* IntrusiveDlistElement<T, Tag>::next() const
     {
-        return reinterpret_cast<IntrusiveDlistElement<T, Tag>*>(_next & ~Int{1});
+        return _next;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    template <class T, class Tag>
+    T* IntrusiveDlistElement<T, Tag>::selfT()
+    {
+        return intrusiveDlistElementCast<T, Tag>(this);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    template <class T, class Tag>
+    const T* IntrusiveDlistElement<T, Tag>::selfT() const
+    {
+        return intrusiveDlistElementCast<T, Tag>(this);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +106,7 @@ namespace dci::utils
     template <class T, class Tag>
     void IntrusiveDlistElement<T, Tag>::reset()
     {
-        _prev = _next = Int{};
+        _prev = _next = {};
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -85,14 +121,14 @@ namespace dci::utils
     template <class T, class Tag>
     void IntrusiveDlistElement<T, Tag>::setPrev(IntrusiveDlistElement<T, Tag>* prev)
     {
-        _prev = reinterpret_cast<Int>(prev) | 1;
+        _prev = prev;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag>
     void IntrusiveDlistElement<T, Tag>::setNext(IntrusiveDlistElement<T, Tag>* next)
     {
-        _next = reinterpret_cast<Int>(next) | 1;
+        _next = next;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -119,11 +155,16 @@ namespace dci::utils
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
     IntrusiveDlist<T, Tag, RemoveCleaner>::IntrusiveDlist(T* element)
-        : _first{intrusiveDlistElementCast<T, Tag>(element)}
-        , _last{intrusiveDlistElementCast<T, Tag>(element)}
+        : IntrusiveDlist{intrusiveDlistElementCast<T, Tag>(element)}
     {
-        auto idee = intrusiveDlistElementCast<T, Tag>(element);
-        idee->set(nullptr, nullptr);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    template <class T, class Tag, class RemoveCleaner>
+    IntrusiveDlist<T, Tag, RemoveCleaner>::IntrusiveDlist(IntrusiveDlistElement<T, Tag>* idee)
+        : _center{idee, idee}
+    {
+        idee->set(&_center, &_center);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -136,12 +177,17 @@ namespace dci::utils
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
     IntrusiveDlist<T, Tag, RemoveCleaner>::IntrusiveDlist(T* element, RemoveCleaner&& removeCleaner)
-        : _first{intrusiveDlistElementCast<T, Tag>(element)}
-        , _last{intrusiveDlistElementCast<T, Tag>(element)}
+        : IntrusiveDlist{intrusiveDlistElementCast<T, Tag>(element), std::forward<RemoveCleaner>(removeCleaner)}
+    {
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    template <class T, class Tag, class RemoveCleaner>
+    IntrusiveDlist<T, Tag, RemoveCleaner>::IntrusiveDlist(IntrusiveDlistElement<T, Tag>* idee, RemoveCleaner&& removeCleaner)
+        : _center{idee, idee}
         , RemoveCleaner{std::forward<RemoveCleaner>(removeCleaner)}
     {
-        auto idee = intrusiveDlistElementCast<T, Tag>(element);
-        idee->set(nullptr, nullptr);
+        idee->set(&_center, &_center);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -159,8 +205,14 @@ namespace dci::utils
     {
         clear();
 
-        _first = std::exchange(from._first, {});
-        _last = std::exchange(from._last, {});
+        if(from.empty())
+            return *this;
+
+        _center.set(from._center.prev(), from._center.next());
+        _center.prev()->setNext(&_center);
+        _center.next()->setPrev(&_center);
+
+        from._center.set(&from._center, &from._center);
 
         return *this;
     }
@@ -169,36 +221,41 @@ namespace dci::utils
     template <class T, class Tag, class RemoveCleaner>
     IntrusiveDlist<T, Tag, RemoveCleaner>::~IntrusiveDlist()
     {
-        dbgAssert(!_first && !_last);
+        dbgAssert(empty());
+        clear();
+        _center.set({}, {});
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
     bool IntrusiveDlist<T, Tag, RemoveCleaner>::empty() const
     {
-        dbgAssert(!_first == !_last);
-        return !_first;
+        return _center.next() == &_center;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
     T* IntrusiveDlist<T, Tag, RemoveCleaner>::first() const
     {
-        return intrusiveDlistElementCast<T, Tag>(_first);
+        if(empty())
+            return {};
+        return _center.nextT();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
     T* IntrusiveDlist<T, Tag, RemoveCleaner>::last() const
     {
-        return intrusiveDlistElementCast<T, Tag>(_last);
+        if(empty())
+            return {};
+        return _center.prevT();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
     std::pair<T*, T*> IntrusiveDlist<T, Tag, RemoveCleaner>::range() const
     {
-        return std::pair{intrusiveDlistElementCast<T, Tag>(_first), intrusiveDlistElementCast<T, Tag>(_last)};
+        return {first(), last()};
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -206,60 +263,49 @@ namespace dci::utils
     bool IntrusiveDlist<T, Tag, RemoveCleaner>::contains(T* element) const
     {
         IntrusiveDlistElement<T, Tag>* idee = intrusiveDlistElementCast<T, Tag>(element);
-        while(idee->prev()) idee = idee->prev();
-        return idee == _first;
+        if(!idee->emplaced())
+            return false;
+
+        IntrusiveDlistElement<T, Tag>* idee0 = _center.prev();
+
+        while(idee0 != &_center)
+        {
+            if(idee == idee0 || idee == &_center)
+                return true;
+
+            idee0 = idee0->prev();
+            if(idee == idee0)
+                return true;
+
+            idee = idee->next();
+        }
+
+        return false;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
-    void IntrusiveDlist<T, Tag, RemoveCleaner>::push(T* element)
+    void IntrusiveDlist<T, Tag, RemoveCleaner>::pushBack(T* element)
     {
         auto idee = intrusiveDlistElementCast<T, Tag>(element);
         dbgAssert(!idee->emplaced());
 
-        if(_last)
-        {
-            dbgAssert(_first);
-
-            dbgAssert(!_last->next());
-            _last->setNext(idee);
-            idee->set(_last, nullptr);
-            _last = idee;
-        }
-        else
-        {
-            dbgAssert(!_first);
-
-            _first = _last = idee;
-            idee->set(nullptr, nullptr);
-        }
+        idee->set(_center.prev(), &_center);
+        _center.prev()->setNext(idee);
+        _center.setPrev(idee);
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     template <class T, class Tag, class RemoveCleaner>
-    T* IntrusiveDlist<T, Tag, RemoveCleaner>::shift()
+    T* IntrusiveDlist<T, Tag, RemoveCleaner>::popFront()
     {
-        if(!_first)
-            return nullptr;
+        if(empty())
+            return {};
 
-        IntrusiveDlistElement<T, Tag>* idee = _first;
-
-        if(_first->next())
-        {
-            _first = _first->next();
-            _first->setPrev(nullptr);
-        }
-        else
-        {
-            dbgAssert(_first == _last);
-            dbgAssert(!_first->prev());
-            _first = _last = nullptr;
-        }
-
-        idee->reset();
-
-        // RemoveCleaner::operator ()(result);
-        return intrusiveDlistElementCast<T, Tag>(idee);
+        IntrusiveDlistElement<T, Tag>* idee = _center.next();
+        idee->retire();
+        // RemoveCleaner::operator ()(idee->selfT());
+        return idee->selfT();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -269,29 +315,7 @@ namespace dci::utils
         dbgAssert(contains(element));
 
         auto idee = intrusiveDlistElementCast<T, Tag>(element);
-
-        if(idee == _first)
-        {
-            if(idee == _last)
-                _first = _last = nullptr;
-            else
-            {
-                idee->next()->setPrev(nullptr);
-                _first = idee->next();
-            }
-        }
-        else if(idee == _last)
-        {
-            idee->prev()->setNext(nullptr);
-            _last = idee->prev();
-        }
-        else
-        {
-            idee->prev()->setNext(idee->next());
-            idee->next()->setPrev(idee->prev());
-        }
-
-        idee->reset();
+        idee->retire();
 
         RemoveCleaner::operator ()(element);
     }
@@ -308,35 +332,12 @@ namespace dci::utils
     template <class F>
     void IntrusiveDlist<T, Tag, RemoveCleaner>::each(F&& f)
     {
-        IntrusiveDlistElement<T, Tag>* idee = _first;
-        while(idee)
+        IntrusiveDlistElement<T, Tag>* idee = _center.next();
+        while(idee != &_center)
         {
             IntrusiveDlistElement<T, Tag>* next = idee->next();
 
-            T* element = intrusiveDlistElementCast<T, Tag>(idee);
-            if constexpr(requires { {f(element)} -> std::convertible_to<bool>; })
-            {
-                if(!f(element))
-                    break;
-            }
-            else
-                f(element);
-
-            idee = next;
-        }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    template <class T, class Tag, class RemoveCleaner>
-    template <class F>
-    void IntrusiveDlist<T, Tag, RemoveCleaner>::each(F&& f) const
-    {
-        IntrusiveDlistElement<T, Tag>* idee = _first;
-        while(idee)
-        {
-            IntrusiveDlistElement<T, Tag>* next = idee->next();
-
-            const T* element = intrusiveDlistElementCast<T, Tag>(idee);
+            T* element = idee->selfT();
             if constexpr(requires { {f(element)} -> std::convertible_to<bool>; })
             {
                 if(!f(element))
@@ -354,13 +355,13 @@ namespace dci::utils
     template <class F>
     void IntrusiveDlist<T, Tag, RemoveCleaner>::flush(F&& f)
     {
-        IntrusiveDlistElement<T, Tag>* idee = _first;
-        _first = _last = nullptr;
-        while(idee)
+        IntrusiveDlistElement<T, Tag>* idee = _center.next();
+        _center.set(&_center, &_center);
+        while(idee != &_center)
         {
             IntrusiveDlistElement<T, Tag>* next = idee->next();
             idee->reset();
-            T* element = intrusiveDlistElementCast<T, Tag>(idee);
+            T* element = idee->selfT();
             f(element);
             RemoveCleaner::operator ()(element);
             idee = next;

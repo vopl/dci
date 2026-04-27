@@ -18,12 +18,10 @@ namespace dci::poll::impl
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Timer::Timer(Duration interval,
                      bool repeatable,
-                     cmt::task::Owner* tickOwner,
                      cmt::Raisable* raisable)
         : _interval{interval.count()}
         , _repeatable{repeatable}
-        , _tickOwner{(tickOwner ? tickOwner : &_localTickOwner)}
-        , _raisable{raisable}
+        , _tickRaisable{raisable}
     {
     }
 
@@ -36,36 +34,19 @@ namespace dci::poll::impl
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     sbs::Signal<> Timer::tick()
     {
-        return _tick->_wire.out();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Timer::setTickOwner(cmt::task::Owner *tickOwner)
-    {
-        if (tickOwner != _tickOwner)
-        {
-            _tickOwner->stop(false);
-        }
-        _tickOwner = tickOwner ? tickOwner : &_localTickOwner;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Timer::resetTickOwner()
-    {
-        _localTickOwner.stop(false);
-        _tickOwner = &_localTickOwner;
+        return _tickWire.out();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Timer::setRaisable(cmt::Raisable* raisable)
     {
-        _raisable = raisable;
+        _tickRaisable = raisable;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Timer::resetRaisable()
     {
-        _raisable = {};
+        _tickRaisable = {};
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -228,18 +209,14 @@ namespace dci::poll::impl
             service.clocking().start(this);
         }
 
-        if(_tick->_wire.connected() && !_tick->_inProgress)
+        if(_tickWire.connected())
         {
-            _tick->_inProgress = true;
-            cmt::spawn() += _tickOwner * [tick{_tick}, cleaner{dci::utils::AtScopeExit{[tick=_tick]{tick->_inProgress=false;}}}]
-            {
-                tick->_wire.in();
-            };
+            _tickWire.in();
         }
 
-        if(_raisable)
+        if(_tickRaisable)
         {
-           _raisable->raise();
+           _tickRaisable->raise();
         }
     }
 

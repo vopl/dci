@@ -74,7 +74,7 @@ namespace dci::cmt::impl
         dbgAssert(this == link->_waitable);
         dbgAssert(!_links.contains(link));
 
-        _links.push(link);
+        _links.pushBack(link);
         _linksAmount++;
     }
 

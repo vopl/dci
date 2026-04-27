@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "fiberPool.hpp"
 #include "polling.hpp"
 #include "clocking.hpp"
 #include "awaking.hpp"
@@ -28,7 +29,6 @@ namespace dci::poll::impl
         std::error_code     initialize();
         std::error_code     run(bool emitStartedStopped);
         sbs::Signal<>       started();
-        sbs::Signal<bool>   doSomeWork();
         std::error_code     stop();
         sbs::Signal<>       stopped();
         std::error_code     deinitialize();
@@ -46,12 +46,12 @@ namespace dci::poll::impl
         Awaking& awaking();
 
     private:
+        FiberPool   _fiberPool;
         Clocking    _clocking;
         Polling     _polling;
         Awaking     _awaking;
 
         sbs::Wire<>     _started;
-        sbs::Wire<bool> _doSomeWork;
         sbs::Wire<>     _stopped;
         bool            _stop{true};
     };

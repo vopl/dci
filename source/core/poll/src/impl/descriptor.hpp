@@ -23,8 +23,12 @@ namespace dci::poll::impl
 {
     class Polling;
 
+    struct DescriptorTag4Polling;
+    struct DescriptorTag4Ready;
+
     class Descriptor final
-        : public utils::IntrusiveDlistElement<Descriptor>
+        : public utils::IntrusiveDlistElement<Descriptor, DescriptorTag4Polling>
+        , public utils::IntrusiveDlistElement<Descriptor, DescriptorTag4Ready>
     {
         Descriptor(const Descriptor&) = delete;
         void operator=(const Descriptor&) = delete;
@@ -34,15 +38,11 @@ namespace dci::poll::impl
         using ReadyStateFlags = descriptor::ReadyStateFlags;
 
     public:
-        Descriptor(Native native, cmt::task::Owner* readyOwner, cmt::Raisable* raisable);
+        Descriptor(Native native, cmt::Raisable* raisable);
         ~Descriptor();
 
         sbs::Signal<void, Native /*native*/, ReadyStateFlags /*readyState*/> ready();
-        void emitReadyIfNeed();
         void emitReady();
-
-        void setReadyOwner(cmt::task::Owner* readyOwner);
-        void resetReadyOwner();
 
         void setRaisable(cmt::Raisable* raisable);
         void resetRaisable();
@@ -52,6 +52,7 @@ namespace dci::poll::impl
 
         Native native() const;
 
+        std::error_code shutdown(bool input, bool output);
         std::error_code close(bool withUninstall = true);
 
         std::error_code attach(Native native);
@@ -70,22 +71,7 @@ namespace dci::poll::impl
     private:
         Native                                      _native;
         ReadyStateFlags                             _readyState{};
-
-        struct Ready
-        {
-            Descriptor*                                 _owner;
-            bool                                        _inProgress{};
-            sbs::Wire<void, Native, ReadyStateFlags>    _wire;
-
-            Ready(Descriptor* owner) : _owner{owner} {}
-        };
-        using ReadyPtr = std::shared_ptr<Ready>;
-        ReadyPtr                                    _ready{std::make_shared<Ready>(this)};
-
-        cmt::task::Owner                            _localReadyOwner{};
-        cmt::task::Owner*                           _readyOwner{&_localReadyOwner};
-        cmt::Raisable*                              _raisable{};
-
-        long long stub[5];
+        sbs::Wire<void, Native, ReadyStateFlags>    _readyWire;
+        cmt::Raisable*                              _readyRaisable{};
     };
 }

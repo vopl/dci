@@ -22,7 +22,7 @@ namespace dci::module::net::datagram
     Channel::Channel(Host * host)
         : api::datagram::Channel<>::Opposite{idl::interface::Initializer{}}
         , _host{host}
-        , _sock{{}, [this](poll::descriptor::Native native, poll::descriptor::ReadyStateFlags readyState){sockReady(native, readyState);}, nullptr}
+        , _sock{{}, [this](poll::descriptor::Native native, poll::descriptor::ReadyStateFlags readyState){sockReady(native, readyState);}}
     {
         _host->track(this);
 

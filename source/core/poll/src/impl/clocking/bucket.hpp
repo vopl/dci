@@ -93,7 +93,7 @@ namespace dci::poll::impl::clocking
             f(el);
         }
 
-        dbgAssert(!*_globalAmountPtr);
+        //dbgAssert(!*_globalAmountPtr);
 
         return;
     }

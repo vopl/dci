@@ -11,11 +11,13 @@
 #pragma once
 
 #ifdef NDEBUG
+#   include "compiler.hpp"
+#
 #   define dbgAssert(condition) ((void)0)
 #   define dbgHeavyAssert(condition) ((void)0)
 #   define dbgAssertX(condition, msg) ((void)0)
 #   define dbgWarn(msg) ((void)0)
-#   define dbgFatal(msg) ((void)0)
+#   define dbgFatal(msg) unreacheable()
 #else
 
 #   define dbgAssert(condition)                                                 \

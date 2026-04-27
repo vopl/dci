@@ -41,7 +41,7 @@ namespace dci::cmt::impl::task
     void Owner::subscribe(Body* task)
     {
         dbgAssert(!_tasks.contains(task));
-        _tasks.push(task);
+        _tasks.pushBack(task);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -49,12 +49,8 @@ namespace dci::cmt::impl::task
     {
         if(_waitingActive)
         {
-            if(_waiting.contains(task))
-                _waiting.remove(task);
-            else if(_tasks.contains(task))
-                _tasks.remove(task);
-            else
-                std::unreachable();
+            dbgAssert((task->utils::IntrusiveDlistElement<Body, Owner>::emplaced()));
+            task->utils::IntrusiveDlistElement<Body, Owner>::retire();
         }
         else
         {
@@ -104,9 +100,8 @@ namespace dci::cmt::impl::task
             std::size_t count{};
             while(!_tasks.empty())
             {
-                Body* task = _tasks.first();
-                _tasks.remove(task);
-                _waiting.push(task);
+                Body* task = _tasks.popFront();
+                _waiting.pushBack(task);
                 ++count;
 
                 if(currentTask != task)

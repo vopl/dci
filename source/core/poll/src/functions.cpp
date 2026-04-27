@@ -33,12 +33,6 @@ namespace dci::poll
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    sbs::Signal<bool> doSomeWork()
-    {
-        return impl::service.doSomeWork();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::error_code stop()
     {
         return impl::service.stop();

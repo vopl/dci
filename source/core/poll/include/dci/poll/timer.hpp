@@ -32,11 +32,8 @@ namespace dci::poll
         Timer(std::chrono::nanoseconds interval = std::chrono::seconds{1});
         Timer(std::chrono::nanoseconds interval, bool repeatable);
 
-        Timer(std::chrono::nanoseconds interval, auto&& onTick, cmt::task::Owner* tickOwner = nullptr) requires(std::invocable<decltype(onTick)&&>);
-        Timer(std::chrono::nanoseconds interval, bool repeatable, auto&& onTick, cmt::task::Owner* tickOwner = nullptr) requires(std::invocable<decltype(onTick)&&>);
-
-        Timer(std::chrono::nanoseconds interval, cmt::task::Owner* tickOwner);
-        Timer(std::chrono::nanoseconds interval, bool repeatable, cmt::task::Owner* tickOwner);
+        Timer(std::chrono::nanoseconds interval, auto&& onTick) requires(std::invocable<decltype(onTick)&&>);
+        Timer(std::chrono::nanoseconds interval, bool repeatable, auto&& onTick) requires(std::invocable<decltype(onTick)&&>);
 
         Timer(std::chrono::nanoseconds interval, cmt::Raisable* raisable);
         Timer(std::chrono::nanoseconds interval, bool repeatable, cmt::Raisable* raisable);
@@ -44,9 +41,6 @@ namespace dci::poll
         ~Timer();
 
         sbs::Signal<> tick();
-
-        void setTickOwner(cmt::task::Owner* owner);
-        void resetTickOwner();
 
         void setRaisable(cmt::Raisable* raisable);
         void resetRaisable();
@@ -66,15 +60,15 @@ namespace dci::poll
     };
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Timer::Timer(std::chrono::nanoseconds interval, auto&& onTick, cmt::task::Owner* tickOwner) requires(std::invocable<decltype(onTick)&&>)
-        : Timer{interval, tickOwner}
+    Timer::Timer(std::chrono::nanoseconds interval, auto&& onTick) requires(std::invocable<decltype(onTick)&&>)
+        : Timer{interval}
     {
         this->tick() += std::forward<decltype(onTick)>(onTick);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Timer::Timer(std::chrono::nanoseconds interval, bool repeatable, auto&& onTick, cmt::task::Owner* tickOwner) requires(std::invocable<decltype(onTick)&&>)
-        : Timer{interval, repeatable, tickOwner}
+    Timer::Timer(std::chrono::nanoseconds interval, bool repeatable, auto&& onTick) requires(std::invocable<decltype(onTick)&&>)
+        : Timer{interval, repeatable}
     {
         this->tick() += std::forward<decltype(onTick)>(onTick);
     }

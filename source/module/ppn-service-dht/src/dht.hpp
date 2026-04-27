@@ -38,8 +38,6 @@ namespace dci::module::ppn::service
         auto awaitReady(auto&& f);
 
     private:
-        cmt::task::Owner _tol;
-    private:
         link::Id        _localId;
         bool            _localIdSetted = false;
         bool            _nodeStarted = false;
@@ -50,8 +48,7 @@ namespace dci::module::ppn::service
         {
             std::chrono::minutes{10},
             true,
-            [this]{_storage.dropOld();},
-            &_tol
+            [this]{_storage.dropOld();}
         };
 
     private:

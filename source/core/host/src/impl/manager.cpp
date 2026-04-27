@@ -163,23 +163,15 @@ namespace dci::host::impl
 
         _workState = WorkState::started;
 
+        if(std::error_code ec = poll::run())
         {
-            sbs::Owner doSomeWorkOwner;
-            poll::doSomeWork() += doSomeWorkOwner * [&]
-            {
-                return cmt::executeReadyFibers();
-            };
+            throw exception::RunFail("unable to run poller: "+ec.message());
+        }
 
-            if(std::error_code ec = poll::run())
-            {
-                throw exception::RunFail("unable to run poller: "+ec.message());
-            }
-
-            if(WorkState::started == _workState)
-            {
-                stop();
-                poll::run(false);
-            }
+        if(WorkState::started == _workState)
+        {
+            stop();
+            poll::run(false);
         }
 
         {

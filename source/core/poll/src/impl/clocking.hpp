@@ -13,6 +13,7 @@
 #include "timer.hpp"
 #include "clocking/bucket.hpp"
 #include "clocking/config.hpp"
+#include "fiberPool.hpp"
 
 #include <dci/utils/bits.hpp>
 #include <chrono>
@@ -30,7 +31,7 @@ namespace dci::poll::impl
         using PointRep      = clocking::PointRep;
 
     public:
-        Clocking();
+        Clocking(FiberPool& fiberPool);
         ~Clocking();
 
     public:
@@ -55,16 +56,23 @@ namespace dci::poll::impl
         PointRep calculateBucketStart(std::size_t index);
         clocking::Bucket* getOrMakeBucket(std::size_t index);
 
+        void flushReady();
+
     private:
-        PointRep _now;
-        PointRep _nearestPoint;
+        sbs::Owner          _sol;
+        FiberPool&          _fiberPool;
 
-        std::size_t _amount = 0;
+        PointRep            _now;
+        PointRep            _nearestPoint;
 
-        static constexpr std::size_t _bucketsAmount = dci::utils::bits::bitsof<PointRep>()-(std::is_signed_v<PointRep> ? 1 : 0);
+        std::size_t         _amount = 0;
+
+        static constexpr std::size_t
+                            _bucketsAmount = dci::utils::bits::bitsof<PointRep>()-(std::is_signed_v<PointRep> ? 1 : 0);
         clocking::BucketPtr _buckets[_bucketsAmount] = {};
 
-        std::size_t _readyAmount = 0;
-        clocking::Bucket _readyBucket;
+        std::size_t         _readyAmountPrev = 0;
+        std::size_t         _readyAmount = 0;
+        clocking::Bucket    _readyBucket;
     };
 }

@@ -37,15 +37,11 @@ namespace dci::poll::impl
     public:
         Timer(Duration interval,
                 bool repeatable,
-                cmt::task::Owner* tickOwner,
                 cmt::Raisable* raisable);
 
         ~Timer();
 
         sbs::Signal<> tick();
-
-        void setTickOwner(cmt::task::Owner* tickOwner);
-        void resetTickOwner();
 
         void setRaisable(cmt::Raisable* raisable);
         void resetRaisable();
@@ -73,16 +69,7 @@ namespace dci::poll::impl
 
         bool                _started{};
 
-        struct Tick
-        {
-            bool _inProgress{};
-            sbs::Wire<> _wire;
-        };
-        using TickPtr = std::shared_ptr<Tick>;
-        TickPtr _tick{std::make_shared<Tick>()};
-
-        cmt::task::Owner*   _tickOwner{};
-        cmt::task::Owner    _localTickOwner{};
-        cmt::Raisable*      _raisable{};
+        sbs::Wire<>         _tickWire;
+        cmt::Raisable*      _tickRaisable{};
     };
 }

@@ -68,11 +68,10 @@ namespace dci::module::net::stream
                 failed(utils::makeError<api::NotConnected>());
                 return;
             }
-
             _sendBuffer.push(std::forward<decltype(bytes)>(bytes));
             if(poll::descriptor::rsf_write & _lastReadyState)
             {
-                _sock.emitReady();
+                doWrite(_sock.native());
             }
         };
 
@@ -212,7 +211,7 @@ namespace dci::module::net::stream
 
         if(_connected && !prevReceiveGranula && _receiveGranula && (poll::descriptor::rsf_read & _lastReadyState))
         {
-            _sock.emitReady();
+            doRead(_sock.native());
         }
     }
 
@@ -277,25 +276,7 @@ namespace dci::module::net::stream
                 return;
         }
 
-        int how;
-#ifdef WIN32
-#   define SHUT_RDWR SD_BOTH
-#   define SHUT_RD SD_RECEIVE
-#   define SHUT_WR SD_SEND
-#endif
-
-        if(input && output)
-            how = SHUT_RDWR;
-        else if(input)
-            how = SHUT_RD;
-        else if(output)
-            how = SHUT_WR;
-        else
-            return;
-
-        int res = ::shutdown(_sock.native(), how);
-        // ignore result
-        (void)res;
+        _sock.shutdown(input, output);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

@@ -87,7 +87,6 @@ namespace dci::module::ppn::transport::natt::mapper::netBased
                   net::Endpoint{net::Ip6Endpoint{_clientAddr.get<net::Ip6Address>(), 0}}
         }
     {
-        _revealTicker.setTickOwner(&_tol);
         _revealTicker.tick() += [this]{static_cast<MostService*>(this)->reveal();};
         _revealTicker.interval(startAfter);
         _revealTicker.start();
@@ -101,7 +100,6 @@ namespace dci::module::ppn::transport::natt::mapper::netBased
         _l->deactivate(this);
         _clientSol.flush();
         _client.reset();
-        _tol.stop();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

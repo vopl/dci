@@ -96,9 +96,14 @@ namespace dci::module::ppn::service
     {
         r->getInstance(api::Supplier<>::lid()).then() += serviceSol() * [this, rid, wr{r.weak()}](cmt::Future<idl::Interface> in)
         {
-            if(!in.resolvedValue())
+            if(in.resolvedException())
             {
                 LOGD("get supplier failed: " << exception::toString(in.detachException()));
+                return;
+            }
+            if(in.resolvedCancel())
+            {
+                LOGD("get supplier failed: cancel");
                 return;
             }
 

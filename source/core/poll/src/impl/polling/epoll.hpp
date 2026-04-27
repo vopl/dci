@@ -28,7 +28,7 @@ namespace dci::poll::impl::polling
         std::error_code installDescriptor(Descriptor* d);
         std::error_code uninstallDescriptor(Descriptor* d);
 
-        std::error_code execute(clocking::Duration timeout);
+        std::error_code execute(clocking::Duration timeout, utils::IntrusiveDlist<Descriptor, DescriptorTag4Ready>& result);
         std::error_code wakeup();
 
         std::error_code deinitialize();

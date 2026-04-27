@@ -100,7 +100,7 @@ namespace dci::poll::impl::polling
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    std::error_code Epoll::execute(clocking::Duration timeout)
+    std::error_code Epoll::execute(clocking::Duration timeout, utils::IntrusiveDlist<Descriptor, DescriptorTag4Ready>& result)
     {
         if(timeout.count() < 0)
         {
@@ -188,6 +188,7 @@ namespace dci::poll::impl::polling
             {
                 Descriptor* d = static_cast<Descriptor *>(evt.data.ptr);
                 d->setReadyState(readyState);
+                result.pushBack(d);
             }
         }
 
