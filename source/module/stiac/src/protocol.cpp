@@ -181,7 +181,8 @@ namespace dci::module::stiac
 
         dbgAssert(!_pumpingInProgress);
         _hasOutputFlags = 0;
-        _delayedAutoPumpTicker.stop();
+        _autoPumpActivator.reset();
+        _autoPumpOwner.stop();
 
         while(!_remoteAuthWaiters.empty())
         {
@@ -309,7 +310,7 @@ namespace dci::module::stiac
 
             if(_effectiveInputRequirements != rOut)
             {
-                _delayedAutoPumpTicker.stop();
+                _autoPumpActivator.reset();
                 _chain.clear();
 
                 if(!buildChain())
@@ -379,7 +380,7 @@ namespace dci::module::stiac
         if(epc)
         {
             _paramsChanging |= epc;
-            _delayedAutoPumpTicker.stop();
+            _autoPumpActivator.reset();
             _chain.clear();
             _handshake.reset();
         }
@@ -389,7 +390,7 @@ namespace dci::module::stiac
     bool Protocol::buildChain()
     {
         dbgAssert(_chain.empty());
-        _delayedAutoPumpTicker.stop();
+        _autoPumpActivator.reset();
         _chain.clear();
         _hasOutputFlags = 0;
 
@@ -615,11 +616,13 @@ namespace dci::module::stiac
         switch(_paramAutoPumping)
         {
         case apip::AutoPumping::none:
-            _delayedAutoPumpTicker.stop();
+            _autoPumpActivator.reset();
+            _autoPumpOwner.stop();
             break;
 
         case apip::AutoPumping::instantly:
-            _delayedAutoPumpTicker.stop();
+            _autoPumpActivator.reset();
+            _autoPumpOwner.stop();
             if(apip::State::work == _state)
             {
                 doPump();
@@ -629,11 +632,23 @@ namespace dci::module::stiac
         case apip::AutoPumping::delayed:
             if(apip::State::work == _state)
             {
-                _delayedAutoPumpTicker.start();
+                _autoPumpActivator.raise();
             }
             else
             {
-                _delayedAutoPumpTicker.stop();
+                _autoPumpActivator.reset();
+            }
+
+            if(_autoPumpOwner.empty())
+            {
+                cmt::spawn() += _autoPumpOwner * [this]
+                {
+                    for(;;)
+                    {
+                        _autoPumpActivator.wait();
+                        doPump();
+                    }
+                };
             }
             break;
         }
@@ -654,7 +669,7 @@ namespace dci::module::stiac
             break;
 
         case apip::AutoPumping::delayed:
-            _delayedAutoPumpTicker.start();
+            _autoPumpActivator.raise();
             break;
 
         default:

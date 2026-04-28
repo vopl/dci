@@ -135,7 +135,8 @@ namespace dci::module::stiac
         std::vector<stages::Base*>  _chain;
         uint64                      _hasOutputFlags = 0;
         bool                        _pumpingInProgress = false;
-        poll::Timer                 _delayedAutoPumpTicker{std::chrono::milliseconds{0}, false, [this]{doPump();}};
+        cmt::Notifier               _autoPumpActivator;
+        cmt::task::Owner            _autoPumpOwner;
 
         crypto::HandshakePtr        _handshake;
 
