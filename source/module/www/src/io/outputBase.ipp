@@ -58,6 +58,7 @@ namespace dci::module::www::io
         if(_writeAllowed && !_buffer.empty())
         {
             this->_support->write(std::move(_buffer));
+            _buffer.clear();
             if constexpr (requires {{static_cast<Impl*>(this)->someWrote()};})
                 static_cast<Impl*>(this)->someWrote();
             if(this->_support->stopped())
