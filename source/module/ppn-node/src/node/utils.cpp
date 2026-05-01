@@ -623,7 +623,7 @@ namespace dci::module::ppn::node::utils
             {
                 "constant", [](const config::ptree& config, crypto::Blake2b& accumuler)
                 {
-                    accumuler.add(config.get_value(String{}));
+                    accumuler.add(config.data());
                 }
             },
         };
