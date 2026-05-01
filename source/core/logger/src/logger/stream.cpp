@@ -17,8 +17,8 @@ namespace dci::logger
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Stream::Stream(std::string_view level, std::string_view identity)
     {
-        _buf << std::boolalpha;
-        _buf << std::setprecision(std::numeric_limits<double>::digits10);
+        _buf.setf(std::ios_base::boolalpha);
+        _buf.precision(std::numeric_limits<double>::digits10);
 
         auto putOne = [&](bool needSpace, std::string_view str) -> bool
         {
