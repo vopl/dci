@@ -13,6 +13,7 @@
 #include <dci/host.hpp>
 #include <dci/config.hpp>
 #include <dci/utils/h2b.hpp>
+#include <dci/utils/b2h.hpp>
 #include "ppn/service/slave.hpp"
 
 namespace dci::module::ppn::service

@@ -20,11 +20,12 @@ namespace dci::module::ppn::service::slave
         , public host::module::ServiceBase<Factory>
     {
     public:
-        Factory(host::Manager* hostManager, const Rules& rules);
+        Factory(host::Manager* hostManager, const link::Id& masterId, const Rules& rules);
         ~Factory();
 
     private:
         host::Manager*  _hostManager{};
+        link::Id        _masterId;
         slave::Rules    _rules;
     };
 }

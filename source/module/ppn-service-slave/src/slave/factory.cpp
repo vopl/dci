@@ -14,9 +14,10 @@
 namespace dci::module::ppn::service::slave
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Factory::Factory(host::Manager* hostManager, const Rules& rules)
+    Factory::Factory(host::Manager* hostManager, const link::Id& masterId, const Rules& rules)
         : idl::gen::ppn::service::slave::Factory<>::Opposite{idl::interface::Initializer{}}
         , _hostManager{hostManager}
+        , _masterId{masterId}
         , _rules{rules}
     {
         methods()->getInstance() += serviceSol() * [this](idl::ILid ilid)
@@ -60,20 +61,24 @@ namespace dci::module::ppn::service::slave
 
             if(denyConcrete)
             {
+                LOGI("master " << utils::b2h(_masterId) << " requests " << " " << ilid.toIidText() << ": deny concrete, forbidden");
                 return cmt::readyFuture<idl::Interface>(exception::buildInstance<api::error::Forbidden>());
             }
             if(!allowConcrete)
             {
                 if(denyByMask)
                 {
+                    LOGI("master " << utils::b2h(_masterId) << " requests " << " " << ilid.toIidText() << ": deny by mask, forbidden");
                     return cmt::readyFuture<idl::Interface>(exception::buildInstance<api::error::Forbidden>());
                 }
                 if(!allowByMask)
                 {
+                    LOGI("master " << utils::b2h(_masterId) << " requests " << " " << ilid.toIidText() << ": not allow by mask, forbidden");
                     return cmt::readyFuture<idl::Interface>(exception::buildInstance<api::error::Forbidden>());
                 }
             }
 
+            LOGI("master " << utils::b2h(_masterId) << " requests " << " " << ilid.toIidText() << ": satisfy");
             return _hostManager->createService(ilid);
         };
     }

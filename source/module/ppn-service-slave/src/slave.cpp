@@ -43,12 +43,13 @@ namespace dci::module::ppn::service
                 auto iter = _master2Rules.find(masterId);
                 if(_master2Rules.end() == iter)
                 {
+                    LOGI("master " << utils::b2h(masterId) << " requests " << " " << ilid.toIidText() << ": no rule, forbidden");
                     return cmt::readyFuture<idl::Interface>(exception::buildInstance<api::error::Forbidden>());
                 }
 
                 if(api::Factory<>::lid() == ilid)
                 {
-                    slave::Factory* factory = new slave::Factory{_hostManager, iter->second};
+                    slave::Factory* factory = new slave::Factory{_hostManager, masterId, iter->second};
                     factory->involvedChanged() += factory->serviceSol() * [factory](bool v)
                     {
                         if(!v)
@@ -57,6 +58,7 @@ namespace dci::module::ppn::service
                         }
                     };
 
+                    LOGI("master " << utils::b2h(masterId) << " requests " << " " << ilid.toIidText() << ": satisfy");
                     return cmt::readyFuture(idl::Interface{factory->opposite()});
                 }
 
@@ -112,10 +114,12 @@ namespace dci::module::ppn::service
 
                             if("*"sv == value.data())
                             {
+                                LOGI("master " << utils::b2h(masterId) << " " << (rule._allow ? "allow" : "deny") << " " << "all");
                                 rule._all = true;
                             }
                             else if(std::optional<idl::ILid> ilidOpt{_hostManager->resolveAlias(value.data())}; ilidOpt && *ilidOpt)
                             {
+                                LOGI("master " << utils::b2h(masterId) << " " << (rule._allow ? "allow" : "deny") << " " << value.data());
                                 rule._concrete.emplace(ilidOpt.value());
                             }
                             else
