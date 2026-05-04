@@ -125,19 +125,19 @@ namespace dci::module::ppn::service::aup::doer
         auto [iter, emplaced] = _suppliers.emplace(rid, _supplierNumberGen, std::move(api));
         if(!emplaced)
         {
-            LOGD(logname{"rid", rid} << " secondary ignored");
+            // LOGD(logname{"rid", rid} << " secondary ignored");
             return;
         }
         ++_supplierNumberGen;
 
         const Supplier& supplier{*iter};
-        LOGD(logname{"rid", supplier._rid, supplier._number} << " joined");
+        // LOGD(logname{"rid", supplier._rid, supplier._number} << " joined");
 
         supplier._api.involvedChanged() += supplier._sol * [this, &supplier](bool b)
         {
             if(!b)
             {
-                LOGD(logname{"rid", supplier._rid, supplier._number} << " disjoined");
+                // LOGD(logname{"rid", supplier._rid, supplier._number} << " disjoined");
                 _suppliers.erase(supplier._rid);
             }
         };
@@ -146,7 +146,7 @@ namespace dci::module::ppn::service::aup::doer
         {
             if(!instance::io::hasCatalogObject(oid))
             {
-                LOGD(logname{"rid", supplier._rid, supplier._number} << " new release: " << utils::b2h(oid));
+                // LOGD(logname{"rid", supplier._rid, supplier._number} << " new release: " << utils::b2h(oid));
                 addIncomplete(oid, Destiny::catalog);
             }
         };
@@ -155,7 +155,7 @@ namespace dci::module::ppn::service::aup::doer
         {
             if(!oids.resolvedValue())
             {
-                LOGD(logname{"rid", supplier._rid, supplier._number} << " getReleases failed: " << exception::toString(oids.detachException()));
+                // LOGD(logname{"rid", supplier._rid, supplier._number} << " getReleases failed: " << exception::toString(oids.detachException()));
                 return;
             }
 
@@ -163,7 +163,7 @@ namespace dci::module::ppn::service::aup::doer
             {
                 if(!instance::io::hasCatalogObject(oid))
                 {
-                    LOGD(logname{"rid", supplier._rid, supplier._number} << " new release: " << utils::b2h(oid));
+                    // LOGD(logname{"rid", supplier._rid, supplier._number} << " new release: " << utils::b2h(oid));
                     addIncomplete(oid, Destiny::catalog);
                 }
             }
@@ -252,7 +252,7 @@ namespace dci::module::ppn::service::aup::doer
                 Demand::DelayedTransfer& dt{n.value()};
                 dt._sol.flush();
 
-                LOGD(logname{"rid", dt._supplierRid, dt._supplierNum, "oid", demand._oid, demand._destiny} << " reuse existing blobTransfer");
+                // LOGD(logname{"rid", dt._supplierRid, dt._supplierNum, "oid", demand._oid, demand._destiny} << " reuse existing blobTransfer");
 
                 worker(demand, dt._supplierRid, dt._supplierNum, std::move(dt._api), recvBuffer);
                 continue;
@@ -271,7 +271,7 @@ namespace dci::module::ppn::service::aup::doer
                 rw._supplierBound = sIter->_number+1;
             });
 
-            LOGD(logname{"rid", sIter->_rid, sIter->_number, "oid", demand._oid, demand._destiny} << " startBlobTransfer");
+            // LOGD(logname{"rid", sIter->_rid, sIter->_number, "oid", demand._oid, demand._destiny} << " startBlobTransfer");
             api::BlobTransfer<> api{idl::interface::Initializer{}};
             sIter->_api->startBlobTransfer(demand._oid, api.opposite());
 
@@ -287,7 +287,7 @@ namespace dci::module::ppn::service::aup::doer
         {
             for(;;)
             {
-                LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece(" << recvBuffer.payloadSize() << ", " << _granulaSize << ")");
+                // LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece(" << recvBuffer.payloadSize() << ", " << _granulaSize << ")");
                 Opt<Bytes> piece = *api->getPiece(recvBuffer.payloadSize(), _granulaSize);
 
                 if(!piece)
@@ -295,13 +295,13 @@ namespace dci::module::ppn::service::aup::doer
                     auto [iter, emplaced] = demand._delayedTransfersEmpty.emplace(api, rid, num);
                     if(emplaced)
                     {
-                        LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece -> none, await availability");
+                        // LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece -> none, await availability");
 
                         const Demand::DelayedTransfer& dd{*iter};
 
                         api.methods()->available() += dd._sol * [this, &demand, &dd]
                         {
-                            LOGD(logname{"rid", dd._supplierRid, dd._supplierNum, "oid", demand._oid, demand._destiny} << " becomes available");
+                            // LOGD(logname{"rid", dd._supplierRid, dd._supplierNum, "oid", demand._oid, demand._destiny} << " becomes available");
                             //auto tn = demand._delayedTransfersEmpty.extract(dd._api); // c++23
                             auto tn = demand._delayedTransfersEmpty.extract(demand._delayedTransfersEmpty.find(dd._api));
                             demand._delayedTransfersRevived.insert(std::move(tn));
@@ -321,14 +321,16 @@ namespace dci::module::ppn::service::aup::doer
                         };
                     }
                     else
-                        LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece -> none");
+                    {
+                        // LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece -> none");
+                    }
 
                     return;
                 }
 
                 bool granulated{_granulaSize == piece->size()};
 
-                LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece -> " << piece->size() << " bytes");
+                // LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " getPiece -> " << piece->size() << " bytes");
                 recvBuffer.push(*std::move(piece));
 
                 if(!granulated)
@@ -341,14 +343,14 @@ namespace dci::module::ppn::service::aup::doer
                 switch(res)
                 {
                 case instance::io::PutObjectResult::ok:
-                    LOGD(logname{"oid", demand._oid, demand._destiny} << " putted to catalog");
+                    // LOGD(logname{"oid", demand._oid, demand._destiny} << " putted to catalog");
                     break;
                 case instance::io::PutObjectResult::corrupted:
-                    LOGD(logname{"oid", demand._oid, demand._destiny} << " corrupted for catalog");
+                    // LOGD(logname{"oid", demand._oid, demand._destiny} << " corrupted for catalog");
                     recvBuffer.reset();
                     return;
                 case instance::io::PutObjectResult::unwanted:
-                    LOGD(logname{"oid", demand._oid, demand._destiny} << " unwanted for catalog");
+                    // LOGD(logname{"oid", demand._oid, demand._destiny} << " unwanted for catalog");
                     break;
                 }
             }
@@ -364,14 +366,14 @@ namespace dci::module::ppn::service::aup::doer
                 switch(res)
                 {
                 case instance::io::PutObjectResult::ok:
-                    LOGD(logname{"oid", demand._oid, demand._destiny} << " putted to storage");
+                    // LOGD(logname{"oid", demand._oid, demand._destiny} << " putted to storage");
                     break;
                 case instance::io::PutObjectResult::corrupted:
-                    LOGD(logname{"oid", demand._oid, demand._destiny} << " corrupted for storage");
+                    // LOGD(logname{"oid", demand._oid, demand._destiny} << " corrupted for storage");
                     recvBuffer.reset();
                     return;
                 case instance::io::PutObjectResult::unwanted:
-                    LOGD(logname{"oid", demand._oid, demand._destiny} << " unwanted for storage");
+                    // LOGD(logname{"oid", demand._oid, demand._destiny} << " unwanted for storage");
                     break;
                 }
             }
@@ -387,7 +389,7 @@ namespace dci::module::ppn::service::aup::doer
         }
         catch(...)
         {
-            LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " exception " << exception::toString(std::current_exception()));
+            // LOGD(logname{"rid", rid, num, "oid", demand._oid, demand._destiny} << " exception " << exception::toString(std::current_exception()));
         }
     }
 }

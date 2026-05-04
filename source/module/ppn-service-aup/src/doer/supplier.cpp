@@ -32,7 +32,7 @@ namespace dci::module::ppn::service::aup::doer
         // in startBlobTransfer(Oid, BlobTransfer::Opposite);
         _api.methods()->startBlobTransfer() += _sol * [this](const Oid& oid, api::BlobTransfer<>::Opposite&& blobTransfer)
         {
-            LOGD("supplier for " << utils::b2h(oid.data(), 5) << " startBlobTransfer");
+            // LOGD("supplier for " << utils::b2h(oid.data(), 5) << " startBlobTransfer");
             _transfer.start(oid, std::move(blobTransfer));
         };
     }

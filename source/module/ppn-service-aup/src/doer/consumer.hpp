@@ -74,7 +74,7 @@ namespace dci::module::ppn::service::aup::doer
         >;
         Demands _demands;
         Demands _demandsProcessing;
-        static constexpr std::size_t    _maxWorkersCount{100};
+        static constexpr std::size_t    _maxWorkersCount{10};
         static constexpr std::size_t    _granulaSize{1024 * 1024 * 1};
     };
 }

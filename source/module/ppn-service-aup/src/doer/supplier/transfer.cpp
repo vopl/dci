@@ -53,7 +53,7 @@ namespace dci::module::ppn::service::aup::doer::supplier
             {
                 if(!v)
                 {
-                    LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer uninvolved");
+                    // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer uninvolved");
 
                     BlobTransfers& blobTransfers = iter1->second;
                     blobTransfers.erase(iter2);
@@ -64,32 +64,32 @@ namespace dci::module::ppn::service::aup::doer::supplier
 
             api.methods()->getPiece() += state._sol * [iter1, iter2](uint32 offset, uint32 size)
             {
-                LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece offset: " << offset << ", size: " << size);
+                // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece offset: " << offset << ", size: " << size);
 
                 auto& [oid, blobTransfers] = *iter1;
 
                 if(std::optional<Bytes> piece = instance::io::getStorageObject(oid, offset, size))
                 {
-                    LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: " << piece->size() << " bytes (storage)");
+                    // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: " << piece->size() << " bytes (storage)");
                     return cmt::readyFuture(Opt<Bytes>{std::move(piece)});
                 }
 
                 if(0 < offset)
                 {
-                    LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: none");
+                    // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: none");
                     return cmt::readyFuture(Opt<Bytes>{Bytes{}});
                 }
 
                 if(std::optional<Bytes> piece = instance::io::getCatalogObject(oid))
                 {
-                    LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: " << piece->size() << " bytes (catalog)");
+                    // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: " << piece->size() << " bytes (catalog)");
                     return cmt::readyFuture(Opt<Bytes>{std::move(piece)});
                 }
 
                 auto& [api, state] = *iter2;
                 state._waitAvailability = true;
 
-                LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: wait availability");
+                // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer getPiece result: wait availability");
                 return cmt::readyFuture(Opt<Bytes>{});
             };
         }
@@ -111,7 +111,7 @@ namespace dci::module::ppn::service::aup::doer::supplier
             {
                 state._waitAvailability = false;
 
-                LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer notify available ");
+                // LOGD("supplier for " << utils::b2h(iter1->first.data(), 5) << " blobTransfer notify available ");
                 api->available();
             }
         }
