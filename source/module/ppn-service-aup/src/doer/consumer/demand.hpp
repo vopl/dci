@@ -18,6 +18,13 @@ namespace dci::module::ppn::service::aup::doer::consumer
     struct Demand
     {
         Oid         _oid{};
+        int         _priority{};
+
+        std::tuple<int, const Oid&> order() const
+        {
+            return std::tuple<int, const Oid&>{-_priority, _oid};
+        }
+
         std::size_t _supplierBound{};
 
         mutable Destiny             _destiny{};

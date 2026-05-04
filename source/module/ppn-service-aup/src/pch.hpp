@@ -18,11 +18,14 @@
 #include <dci/utils/atScopeExit.hpp>
 #include <dci/utils/overloaded.hpp>
 
+#ifndef NDEBUG
+#   define BOOST_MULTI_INDEX_ENABLE_SAFE_MODE 1
+#endif
+
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/composite_key.hpp>
 
 #include <deque>
 #include <flat_set>

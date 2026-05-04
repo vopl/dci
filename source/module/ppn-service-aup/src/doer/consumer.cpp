@@ -13,12 +13,24 @@
 
 namespace dci::module::ppn::service::aup::doer
 {
+    /* priorities:
+     *
+     *      release          50
+     *
+     *      catalog target   40
+     *      catalog buffer   30
+     *
+     *      storage target   20
+     *      storage buffer   10
+     */
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Consumer::Consumer()
     {
         instance::notifiers::onBufferCatalogIncomplete() += _sol * [this](const Oid& oid)
         {
-            addIncomplete(oid, Destiny::catalog);
+            bool forTarget = instance::io::targetCatalogIncomplete().contains(oid);
+            addIncomplete(oid, forTarget ? 40 : 30, Destiny::catalog);
         };
 
         instance::notifiers::onBufferCatalogComplete() += _sol * [this](const Oid& oid)
@@ -28,7 +40,8 @@ namespace dci::module::ppn::service::aup::doer
 
         instance::notifiers::onBufferStorageIncomplete() += _sol * [this](const Oid& oid)
         {
-            addIncomplete(oid, Destiny::storage);
+            bool forTarget = instance::io::targetStorageIncomplete().contains(oid);
+            addIncomplete(oid, forTarget ? 20 : 10, Destiny::storage);
         };
 
         instance::notifiers::onBufferStorageComplete() += _sol * [this](const Oid& oid)
@@ -37,10 +50,16 @@ namespace dci::module::ppn::service::aup::doer
         };
 
         for(const Oid& oid : instance::io::bufferCatalogIncomplete())
-            addIncomplete(oid, Destiny::catalog);
+        {
+            bool forTarget = instance::io::targetCatalogIncomplete().contains(oid);
+            addIncomplete(oid, forTarget ? 40 : 30, Destiny::catalog);
+        }
 
         for(const Oid& oid : instance::io::bufferStorageIncomplete())
-            addIncomplete(oid, Destiny::storage);
+        {
+            bool forTarget = instance::io::targetStorageIncomplete().contains(oid);
+            addIncomplete(oid, forTarget ? 20 : 10, Destiny::storage);
+        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -142,16 +161,16 @@ namespace dci::module::ppn::service::aup::doer
             }
         };
 
-        supplier._api->newRelease() += supplier._sol * [this, &supplier](const Oid& oid)
+        supplier._api->newRelease() += supplier._sol * [this/*, &supplier*/](const Oid& oid)
         {
             if(!instance::io::hasCatalogObject(oid))
             {
                 // LOGD(logname{"rid", supplier._rid, supplier._number} << " new release: " << utils::b2h(oid));
-                addIncomplete(oid, Destiny::catalog);
+                addIncomplete(oid, 50, Destiny::catalog);
             }
         };
 
-        supplier._api->getReleases().then() += supplier._sol * [this, &supplier](cmt::Future<Set<Oid>> oids)
+        supplier._api->getReleases().then() += supplier._sol * [this/*, &supplier*/](cmt::Future<Set<Oid>> oids)
         {
             if(!oids.resolvedValue())
             {
@@ -164,7 +183,7 @@ namespace dci::module::ppn::service::aup::doer
                 if(!instance::io::hasCatalogObject(oid))
                 {
                     // LOGD(logname{"rid", supplier._rid, supplier._number} << " new release: " << utils::b2h(oid));
-                    addIncomplete(oid, Destiny::catalog);
+                    addIncomplete(oid, 50, Destiny::catalog);
                 }
             }
         };
@@ -173,9 +192,14 @@ namespace dci::module::ppn::service::aup::doer
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Consumer::addIncomplete(const Oid& oid, Destiny destiny)
+    void Consumer::addIncomplete(const Oid& oid, int priority, Destiny destiny)
     {
-        auto dIter = _demands.emplace(oid).first;
+        auto [dIter, emplaced] = _demands.emplace(oid, priority);
+        if(emplaced)
+        {
+            // LOGD("addIncomplete prio: " << priority);
+        }
+
         if(!(dIter->_destiny & destiny))
         {
             dIter->_destiny |= destiny;
@@ -186,8 +210,10 @@ namespace dci::module::ppn::service::aup::doer
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Consumer::fixComplete(const Oid& oid, Destiny destiny)
     {
-        auto iter = _demands.find(oid);
-        if(_demands.end() == iter)
+        auto& idx{_demands.get<DemandByOid>()};
+
+        auto iter = idx.find(oid);
+        if(idx.end() == iter)
             return;
 
         iter->_destiny &= ~destiny;
@@ -201,7 +227,8 @@ namespace dci::module::ppn::service::aup::doer
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Consumer::fireWorker()
     {
-        for(auto dIter{_demands.begin()}; dIter!=_demands.end();)
+        auto& demandsByOrder{_demands.get<DemandByOrder>()};
+        for(auto dIter{demandsByOrder.begin()}; dIter!=demandsByOrder.end();)
         {
             if(_demandsProcessing.size() >= _maxWorkersCount)
                 break;
@@ -222,7 +249,9 @@ namespace dci::module::ppn::service::aup::doer
                 }
             }
 
-            auto node{_demands.extract(dIter++)};
+            // LOGD("demand prio: " << demand._priority);
+
+            auto node{demandsByOrder.extract(dIter++)};
             _demandsProcessing.insert(std::move(node));
 
             cmt::spawn() += demand._tol * [this, &demand]

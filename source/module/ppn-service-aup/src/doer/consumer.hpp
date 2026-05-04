@@ -32,7 +32,7 @@ namespace dci::module::ppn::service::aup::doer
         using Supplier = consumer::Supplier;
 
     private:
-        void addIncomplete(const Oid& oid, Destiny destiny);
+        void addIncomplete(const Oid& oid, int priority, Destiny destiny);
         void fixComplete(const Oid& oid, Destiny destiny);
 
         void fireWorker();
@@ -60,16 +60,18 @@ namespace dci::module::ppn::service::aup::doer
         std::size_t _supplierNumberGen{1};
 
     private:
-        using DemandByOid           = bmi::member       <Demand, Oid,          &Demand::_oid           >;
-        using DemandBySupplierBound = bmi::member       <Demand, std::size_t,  &Demand::_supplierBound >;
+        using DemandByOid           = bmi::member       <Demand, Oid,                           &Demand::_oid           >;
+        using DemandByOrder         = bmi::const_mem_fun<Demand, std::tuple<int, const Oid&>,   &Demand::order          >;
+        //using DemandBySupplierBound = bmi::member       <Demand, std::size_t,                   &Demand::_supplierBound >;
 
         using Demands = bmi::multi_index_container
         <
             Demand,
             bmi::indexed_by
             <
-                bmi::ordered_unique     <bmi::tag<DemandByOid>,             DemandByOid>,
-                bmi::ordered_non_unique <bmi::tag<DemandBySupplierBound>,   DemandBySupplierBound>
+                bmi::ordered_unique     <bmi::tag<DemandByOid>,             DemandByOid             >,
+                bmi::ordered_non_unique <bmi::tag<DemandByOrder>,           DemandByOrder           >/*,
+                bmi::ordered_non_unique <bmi::tag<DemandBySupplierBound>,   DemandBySupplierBound   >*/
             >
         >;
         Demands _demands;
