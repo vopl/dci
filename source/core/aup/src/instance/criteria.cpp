@@ -221,6 +221,18 @@ namespace dci::aup::instance
                 _concretes.insert(aup::catalog::File::Kind::cmm);
                 _concretes.insert(aup::catalog::File::Kind::src);
             }
+            else if("dev" == s)
+            {
+                _concretes.insert(aup::catalog::File::Kind::runtime);
+                _concretes.insert(aup::catalog::File::Kind::resource);
+                _concretes.insert(aup::catalog::File::Kind::rdep);
+                _concretes.insert(aup::catalog::File::Kind::test);
+                _concretes.insert(aup::catalog::File::Kind::debug);
+                _concretes.insert(aup::catalog::File::Kind::bdep);
+                _concretes.insert(aup::catalog::File::Kind::include);
+                _concretes.insert(aup::catalog::File::Kind::idl);
+                _concretes.insert(aup::catalog::File::Kind::cmm);
+            }
             else if("minimal" == s)
             {
                 _concretes.insert(aup::catalog::File::Kind::runtime);
