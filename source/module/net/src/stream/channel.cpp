@@ -346,15 +346,17 @@ namespace dci::module::net::stream
 
             if(0 > res)
             {
-                _lastReadyState &= ~poll::descriptor::rsf_write;
-
 #ifdef _WIN32
                 DWORD lastError = WSAGetLastError();
                 bool noSpaceInSocketYet = (WSATRY_AGAIN == lastError) || (WSAEWOULDBLOCK == lastError);
 #else
                 bool noSpaceInSocketYet = EAGAIN == errno;
 #endif
-                if(!noSpaceInSocketYet)
+                if(noSpaceInSocketYet)
+                {
+                    _lastReadyState &= ~poll::descriptor::rsf_write;
+                }
+                else
                 {
                     if(preCloseMode)
                     {
@@ -370,17 +372,14 @@ namespace dci::module::net::stream
                 break;
             }
 
-            if(0 == res)
-            {
-                _lastReadyState &= ~poll::descriptor::rsf_write;
-                break;
-            }
-
             uint32 wrote = static_cast<uint32>(res);
-            dbgAssert(wrote <= _sendBuffer.bufsSize());
+            if(wrote)
+            {
+                dbgAssert(wrote <= _sendBuffer.bufsSize());
 
-            totalWrote += wrote;
-            _sendBuffer.drop(wrote);
+                totalWrote += wrote;
+                _sendBuffer.drop(wrote);
+            }
         }
 
         if(!preCloseMode && totalWrote)
@@ -423,7 +422,6 @@ namespace dci::module::net::stream
 
             if(0 > res)
             {
-                _lastReadyState &= ~poll::descriptor::rsf_read;
 
 #ifdef _WIN32
                 DWORD lastError = WSAGetLastError();
@@ -433,6 +431,7 @@ namespace dci::module::net::stream
 #endif
                 if(noDataInSocketYet)
                 {
+                    _lastReadyState &= ~poll::descriptor::rsf_read;
                     break;
                 }
 
