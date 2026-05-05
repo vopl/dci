@@ -30,6 +30,11 @@ int main(int argc, char* argv[])
                 ("version", "print version info")
 
                 (
+                    "build-dir",
+                    po::value<std::string>()->notifier([&](auto v){c.setBuildDir(v);}),
+                    "path to build directory"
+                )
+                (
                     "meta-file",
                     po::value<std::string>()->notifier([&](auto v){c.setMetaFile(v);}),
                     "path to artifacts meta file"

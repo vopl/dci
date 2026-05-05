@@ -597,15 +597,11 @@ namespace dci::aup
 
             for(const Oid& unitOid : r->_dependencies)
             {
-                catalog::UnitPtr u = catalog::objectPtrCast<catalog::Unit>(_catalog.get(unitOid));
-                if(!u)
-                {
-                    continue;
-                }
+                catalog::ObjectPtr o = _catalog.get(unitOid);
 
                 for(const instance::Criteria& c : _targetCriterias)
                 {
-                    if(c.match(u.get()))
+                    if(c.match(o.get()))
                     {
                         auto& rootValue = res[unitOid];
 

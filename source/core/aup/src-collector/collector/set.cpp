@@ -14,6 +14,18 @@
 namespace dci::aup
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Collector::setBuildDir(std::string v)
+    {
+        auto p = fs::canonical(v);
+        if(!fs::is_directory(p))
+        {
+            throw std::runtime_error{"bad build directory path: "+v+" ("+p.string()+")"};
+        }
+
+        _buildDir = p;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Collector::setMetaFile(std::string v)
     {
         auto p = fs::canonical(v);

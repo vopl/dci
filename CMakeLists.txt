@@ -20,34 +20,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-error")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
-
-
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything")
-
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat-pedantic")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-exit-time-destructors")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-global-constructors")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-shadow")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-shadow-field")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch-enum")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-documentation")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-float-equal")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-weak-vtables")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-weak-template-vtables")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-extra-semi-stmt")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unreachable-code-return")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unreachable-code-break")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-covered-switch-default")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-template")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-undefined-func-template")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-padded")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-alloca")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-ctad-maybe-unsupported")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-header-hygiene")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-redundant-parens")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-variable-declarations")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-disabled-macro-expansion")
 endif()
 
 
@@ -83,19 +55,20 @@ set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address --param asan-stack=0 -fno-omit-frame-pointer")
 
 ##########################################################################################
-file(GLOB units1 ${CMAKE_CURRENT_LIST_DIR}/source/core/*/CMakeLists.txt)
-file(GLOB units2 ${CMAKE_CURRENT_LIST_DIR}/source/module/*/CMakeLists.txt)
-if(DEFINED ENV{DCI_EXTARNAL_UNIT_DIRS})
-    set(units3)
-    foreach(td $ENV{DCI_EXTARNAL_UNIT_DIRS})
-        file(GLOB tu ${td}/*/CMakeLists.txt)
-        list(APPEND units3 ${tu})
-    endforeach()
-endif()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_LIST_DIR}/source/core/integration/cmakeModules)
+set(CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    ${CMAKE_CURRENT_LIST_DIR}/source/core/integration/cmakeModules
+    ${CMAKE_CURRENT_LIST_DIR}/cmakeModules)
 include(dciIntegration)
+
+set(units)
+foreach(td ${CMAKE_CURRENT_LIST_DIR}/source ${CMAKE_CURRENT_LIST_DIR}/source/core ${CMAKE_CURRENT_LIST_DIR}/source/module $ENV{DCI_EXTARNAL_UNIT_DIRS})
+    file(GLOB tu ${td}/*/CMakeLists.txt)
+    list(APPEND units ${tu})
+endforeach()
+
 dciIntegration(
-    UNIT_SCRIPTS            ${units1} ${units2} ${units3}
+    UNIT_SCRIPTS            ${units}
 #    SRC_DIR                 ${CMAKE_CURRENT_SOURCE_DIR}
 
 #    OUT_DIR                 $ENV{DCI_OUT_DIR}

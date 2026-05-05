@@ -21,6 +21,11 @@ namespace dci::aup
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Collector::~Collector()
     {
+        std::error_code ec;
+        if(fs::exists(_cmakeFile.abs(), ec))
+        {
+            fs::remove(_cmakeFile.abs(), ec);
+        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -37,6 +42,7 @@ namespace dci::aup
         }
 
         processFiles();
+        generateCmake();
         fixRelease();
 
         _aupStorage.put("catalog", _aupCatalog.serialize());

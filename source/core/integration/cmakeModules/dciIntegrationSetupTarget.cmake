@@ -138,15 +138,11 @@ if(NOT COMMAND dciIntegrationSetupTarget)
         endif()
 
         #######################################################################
-        dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target}
-            TARGET_TYPE ${type}
-            TARGET_KIND ${kind})
-
+        dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target} TARGET_TYPE ${type} TARGET_KIND ${kind})
         if(targetRFile)
             dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target} TARGET_RFILE ${targetRFile})
             dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target} FILE_FOR_TARGET_DEPS ${targetRFile})
         endif()
-
         if(targetLFile)
             dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target} TARGET_LFILE ${targetLFile})
         endif()
@@ -325,6 +321,7 @@ if(NOT COMMAND dciIntegrationSetupTarget)
 
         ############################################################
         if(setupLaunchCmd)
+            dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target}-cmd TARGET_TYPE ${type} TARGET_KIND ${kind})
             if(WIN32)
                 get_target_property(outputName ${target} OUTPUT_NAME)
                 if(NOT outputName)
@@ -353,8 +350,10 @@ if(NOT COMMAND dciIntegrationSetupTarget)
                 if(kind STREQUAL "REGULAR" OR kind STREQUAL "BDEP")
                     dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target} TARGET_DEPS ${cmd})
                 endif()
+                dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target}-cmd TARGET_RFILE ${cmd})
             else()
                 add_executable(${target}-cmd ALIAS ${target})
+                dciIntegrationMeta(UNIT ${DCI_UNIT_NAME} TARGET ${target}-cmd TARGET_RFILE ${targetRFile})
             endif()
         endif()
     endfunction()

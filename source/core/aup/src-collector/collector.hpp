@@ -28,6 +28,7 @@ namespace dci::aup
         Collector();
         ~Collector();
 
+        void setBuildDir(std::string v);
         void setMetaFile(std::string v);
 
         void setVendorKey(std::string v);
@@ -57,6 +58,9 @@ namespace dci::aup
         std::set<collector::AbsAndRel> processDirs(const collector::Meta& meta, const std::set<collector::AbsAndRel>& dirs, catalog::File::Kind kind);
         void processFiles();
 
+    private:
+        void generateCmake();
+
     private://fixation
         Oid fixFile(const collector::AbsAndRel& file);
         std::set<Oid> fixFiles(const std::set<collector::AbsAndRel>& files);
@@ -66,6 +70,7 @@ namespace dci::aup
         void fixRelease();
 
     private:
+        fs::path                                _buildDir;
         fs::path                                _metaFile;
         std::array<std::uint8_t, 32>            _vendorKey {};
         fs::path                                _storageDir;
@@ -83,5 +88,8 @@ namespace dci::aup
 
     private:
         std::map<collector::AbsAndRel, Oid>     _processedFiles;
+
+    private:
+        collector::AbsAndRel                    _cmakeFile;
     };
 }

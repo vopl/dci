@@ -30,13 +30,20 @@ target_compile_definitions(${UNAME} PRIVATE -DDCI_VENDOR="${DCI_VENDOR}")
 include(dciIntegrationMeta)
 
 dciIntegrationMeta(UNIT ${UNAME} SRC_FILE ${CMAKE_SOURCE_DIR}/CMakeLists.txt CMakeLists.txt)
+dciIntegrationMeta(UNIT ${UNAME} CMM_FILE ${CMAKE_SOURCE_DIR}/CMakeLists.txt CMakeLists.txt)
 dciIntegrationMeta(UNIT ${UNAME} SRC_DIR ${CMAKE_SOURCE_DIR}/source/make source/make)
+
+dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "bin/**")
+dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "lib/**")
+dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "test/**")
+dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "module/**")
 
 dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "etc/**")
 dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "log/**")
 dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "var/**")
 dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "tmp/**")
 
+dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED ".qtcreator/**")
 dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED ".git/**")
 dciIntegrationMeta(UNIT ${UNAME} EXTRA_ALLOWED "txt/**")
 

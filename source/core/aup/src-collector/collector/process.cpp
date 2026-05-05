@@ -523,6 +523,134 @@ namespace dci::aup
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Collector::generateCmake()
+    {
+        {
+            std::error_code ec;
+            if(fs::exists(_cmakeFile.abs(), ec))
+            {
+                fs::remove(_cmakeFile.abs(), ec);
+            }
+        }
+
+        if(_buildDir.empty())
+        {
+            _cmakeFile.abs() = fs::temp_directory_path() / "dciBuiltUnits.cmake";
+        }
+        else
+        {
+            _cmakeFile.abs() = _buildDir / "dciBuiltUnits.cmake";
+        }
+        _cmakeFile.rel() = "cmakeModules/dciBuiltUnits.cmake";
+
+        std::ofstream out{_cmakeFile.abs()};
+        if(!out)
+        {
+            dbgFatal("unable to create cmake file");
+        }
+
+        {
+            auto addDir = [&](std::string_view varName, std::string_view dir)
+            {
+                out << "get_property(tmp GLOBAL PROPERTY " << varName << ")" << std::endl;
+                out << "list(APPEND tmp " << std::quoted(dir) << ")" << std::endl;
+                out << "list(REMOVE_DUPLICATES tmp)" << std::endl;
+                out << "set_property(GLOBAL PROPERTY " << varName << " ${tmp})" << std::endl;
+            };
+
+            addDir("DCI_CMM_DIRS", "${DCI_OUT_DIR}/cmakeModules");
+            addDir("DCI_INCLUDE_DIRS", "${DCI_OUT_DIR}/include");
+            addDir("DCI_IDL_DIRS", "${DCI_OUT_DIR}/idl");
+        }
+
+        out << std::endl;
+
+        {
+            out << "set_property(GLOBAL PROPERTY DCI_INTEGRATION_REGISTRY_UNITS";
+            for(const auto&[_, unit] : _unitsMeta)
+            {
+                out << " " << unit._name;
+            }
+            out << ")" << std::endl;
+        }
+
+        for(const auto&[_, unit] : _unitsMeta)
+        {
+            out << "set_property(GLOBAL PROPERTY DCI_INTEGRATION_REGISTRY_" << unit._name << " On)" << std::endl;
+            out << "add_custom_target(unit-" << unit._name << " ALL)" << std::endl;
+
+            for(const auto&[_, target] : unit._targets)
+            {
+                if(catalog::File::Kind::bdep != target._kind && catalog::File::Kind::runtime != target._kind)
+                {
+                    continue;
+                }
+
+                if(collector::Target::Type::null == target._type)
+                {
+                    continue;
+                }
+
+                switch(target._type)
+                {
+                case collector::Target::Type::null:
+                    break;
+                case collector::Target::Type::staticLibrary:
+                    out << "add_library(" << target._name << " STATIC IMPORTED GLOBAL)" << std::endl;
+                    break;
+                case collector::Target::Type::sharedLibrary:
+                    out << "add_library(" << target._name << " SHARED IMPORTED GLOBAL)" << std::endl;
+                    break;
+                case collector::Target::Type::moduleLibrary:
+                    out << "add_library(" << target._name << " MODULE IMPORTED GLOBAL)" << std::endl;
+                    break;
+                case collector::Target::Type::executable:
+                    out << "add_executable(" << target._name << " IMPORTED GLOBAL)" << std::endl;
+                    break;
+                }
+
+                std::optional<collector::AbsAndRel> rfile;
+                if(!target._rfile.empty())
+                {
+                    rfile = absAndRel(target, target._rfile);
+                }
+
+                std::optional<collector::AbsAndRel> lfile;
+                if(!target._lfile.empty())
+                {
+                    lfile = absAndRel(target, target._lfile);
+                }
+
+                switch(target._type)
+                {
+                case collector::Target::Type::null:
+                    break;
+                case collector::Target::Type::staticLibrary:
+                    out << "set_target_properties(" << target._name << " PROPERTIES IMPORTED_LOCATION " << std::quoted("${DCI_OUT_DIR}/"+lfile->rel().string()) << ")" << std::endl;
+                    break;
+                case collector::Target::Type::sharedLibrary:
+                case collector::Target::Type::moduleLibrary:
+                case collector::Target::Type::executable:
+                    if(rfile)
+                    {
+                        out << "set_target_properties(" << target._name << " PROPERTIES IMPORTED_LOCATION " << std::quoted("${DCI_OUT_DIR}/"+rfile->rel().string()) << ")" << std::endl;
+                    }
+                    if(lfile && lfile != rfile)
+                    {
+                        out << "set_target_properties(" << target._name << " PROPERTIES IMPORTED_IMPLIB " << std::quoted("${DCI_OUT_DIR}/"+lfile->rel().string()) << ")" << std::endl;
+                    }
+                    break;
+                }
+                out << std::endl;
+            }
+        }
+
+        out.close();
+
+        processFile(_globalMeta, _cmakeFile, catalog::File::Kind::cmm, {});
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Oid Collector::fixFile(const collector::AbsAndRel& file)
     {
         auto iter = _processedFiles.find(file);
@@ -640,6 +768,8 @@ namespace dci::aup
     void Collector::fixRelease()
     {
         catalog::ReleasePtr release{std::make_unique<catalog::Release>()};
+
+        release->_dependencies += fixFile(_cmakeFile);
 
         for(const auto& nmeta: _unitsMeta)
         {

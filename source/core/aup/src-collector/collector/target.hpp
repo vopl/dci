@@ -24,6 +24,15 @@ namespace dci::aup::collector
         bool setup(const std::string& key, const std::vector<std::string>& values) override;
 
     public:
+        enum class Type
+        {
+            null,
+            staticLibrary,
+            sharedLibrary,
+            moduleLibrary,
+            executable,
+        };
+        Type                  _type{};
         catalog::File::Kind   _kind{};
         fs::path              _rfile;
         fs::path              _lfile;

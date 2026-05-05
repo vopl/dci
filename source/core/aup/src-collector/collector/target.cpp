@@ -24,8 +24,13 @@ namespace dci::aup::collector
                 return false;
             }
 
-            // на текущий момент не важно
-            return true;
+            if("STATIC_LIBRARY" == values[0]) {_type = Type::staticLibrary; return true;}
+            if("SHARED_LIBRARY" == values[0]) {_type = Type::sharedLibrary; return true;}
+            if("MODULE_LIBRARY" == values[0]) {_type = Type::moduleLibrary; return true;}
+            if("EXECUTABLE"     == values[0]) {_type = Type::executable;    return true;}
+
+            std::cerr << "unknown target type: " << values[0] << std::endl;
+            return false;
         }
 
         if("TARGET_KIND" == key)

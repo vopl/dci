@@ -107,6 +107,7 @@ if(dciIntegrationStage3)
 
     add_custom_command(OUTPUT ${imageCatalogFile}
         COMMAND ${UNAME}-collector-cmd
+            --build-dir=${CMAKE_CURRENT_BINARY_DIR}
             --meta-file=${metaFile}
             --vendor-key=${DCI_VENDOR_KEY}
             --storage-dir=${imageDir}
