@@ -24,7 +24,8 @@ if(NOT COMMAND dciIntegrationMeta)
 
                 TARGET_TYPE
                 TARGET_KIND
-                TARGET_FILE
+                TARGET_RFILE
+                TARGET_LFILE
                 TARGET_DEPS)
 
         set(options)

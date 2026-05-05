@@ -47,16 +47,29 @@ namespace dci::aup::collector
             return false;
         }
 
-        if("TARGET_FILE" == key)
+        if("TARGET_RFILE" == key)
         {
             if(1 != values.size())
             {
-                std::cerr << "bad target file value" << std::endl;
+                std::cerr << "bad target rfile value" << std::endl;
                 return false;
             }
 
             checkIsAbsFile(values[0]);
-            _file = fs::path{values[0]}.lexically_normal();
+            _rfile = fs::path{values[0]}.lexically_normal();
+            return true;
+        }
+
+        if("TARGET_LFILE" == key)
+        {
+            if(1 != values.size())
+            {
+                std::cerr << "bad target lfile value" << std::endl;
+                return false;
+            }
+
+            checkIsAbsFile(values[0]);
+            _lfile = fs::path{values[0]}.lexically_normal();
             return true;
         }
 

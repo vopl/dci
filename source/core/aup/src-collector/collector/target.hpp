@@ -25,7 +25,8 @@ namespace dci::aup::collector
 
     public:
         catalog::File::Kind   _kind{};
-        fs::path              _file;
+        fs::path              _rfile;
+        fs::path              _lfile;
         std::set<fs::path>    _deps;
 
     public:

@@ -391,19 +391,17 @@ namespace dci::aup
         }
 
         // собрать все таргеты
-        std::set<fs::path> targetFiles;
+        std::set<fs::path> targetRFiles;
         for(const auto& nu: _unitsMeta)
         {
             const collector::Unit& u = nu.second;
             for(const auto& nt: u._targets)
             {
                 const collector::Target& t = nt.second;
-                if(catalog::File::Kind::null == t._kind)
+                if(catalog::File::Kind::null != t._kind && !t._rfile.empty())
                 {
-                    continue;
+                    targetRFiles += t._rfile;
                 }
-
-                targetFiles += t._file;
             }
         }
 
@@ -421,7 +419,7 @@ namespace dci::aup
 
                 for(const fs::path& dep : t._deps)
                 {
-                    if(!targetFiles.contains(dep))
+                    if(!targetRFiles.contains(dep))
                     {
                         std::set<collector::AbsAndRel> dbgDeps;
                         if(!_ignoreDebug4Others)
@@ -429,7 +427,7 @@ namespace dci::aup
                             dbgDeps += processFileDebug(t, absAndRel(t, dep));
                         }
 
-                        processFile(t, dep, catalog::File::Kind::rdep, dbgDeps);
+                        processFile(t, dep, t._kind, dbgDeps);
                     }
                 }
             }
@@ -476,14 +474,25 @@ namespace dci::aup
 
                         if(unresolvedDeps.empty())
                         {
-                            if(!_ignoreDebug4Targets)
+                            if(!t._rfile.empty())
                             {
-                                allDeps += processFileDebug(t, absAndRel(t, t._file));
+                                if(!_ignoreDebug4Targets)
+                                {
+                                    allDeps += processFileDebug(t, absAndRel(t, t._rfile));
+                                }
+
+                                if(!processFile(t, t._rfile, t._kind, allDeps).empty())
+                                {
+                                    processed++;
+                                }
                             }
 
-                            if(!processFile(t, t._file, t._kind, allDeps).empty())
+                            if(!t._lfile.empty())
                             {
-                                processed++;
+                                if(!processFile(t, t._lfile, catalog::File::Kind::bdep, allDeps).empty())
+                                {
+                                    processed++;
+                                }
                             }
                         }
                         else
@@ -569,7 +578,15 @@ namespace dci::aup
 
         std::set<Oid> res;
 
-        res += fixFile(absAndRel(meta, meta._file));
+        if(!meta._rfile.empty())
+        {
+            res += fixFile(absAndRel(meta, meta._rfile));
+        }
+
+        if(!meta._lfile.empty())
+        {
+            res += fixFile(absAndRel(meta, meta._lfile));
+        }
 
         std::set<collector::AbsAndRel> deps;
         for(const fs::path& dep : meta._deps)
