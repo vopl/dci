@@ -8,10 +8,10 @@
 // e46c3fd261d639a831722481db0207e8183df2bb2ca1bc825fe853fd61e4b777
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
-require "configurable.idl"
-require "ppn/node/link/feature.idl"
+require <configurable.idl>
+require <ppn/node/link/feature.idl>
 require "ppn/node/rdb/feature.idl"
-require "ppn/node/feature.idl"
+require <ppn/node/feature.idl>
 
 scope ppn::topology
 {

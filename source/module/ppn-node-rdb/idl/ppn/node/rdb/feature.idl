@@ -10,7 +10,7 @@
 
 require "pql.idl"
 require "query.idl"
-require "ppn/node/link/remote.idl"
+require <ppn/node/link/remote.idl>
 
 scope ppn::node::rdb
 {

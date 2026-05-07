@@ -41,12 +41,12 @@ namespace dci::idl::prs
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    im::ast::Scope State::process(const std::string& fileName, bool once)
+    im::ast::Scope State::process(const std::string& fileName, bool local, bool once)
     {
         Iterator pos = _sourcesStack.empty() ? Iterator{} : _sourcesStack.back()._pos;
 
         std::string resolverErrorMessage;
-        std::string resolvedFileName = resolveFileName(fileName, resolverErrorMessage);
+        std::string resolvedFileName = resolveFileName(local, fileName, resolverErrorMessage);
         if(resolvedFileName.empty())
         {
             pushError("'" + fileName + "': " + resolverErrorMessage, pos);
@@ -202,65 +202,58 @@ namespace dci::idl::prs
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    std::string State::resolveFileName(const std::string& in, std::string& errorMessage)
+    std::string State::resolveFileName(bool local, const std::string& in, std::string& errorMessage)
     {
         try
         {
             fs::path p{in};
-            fs::path candidate;
+            fs::path result{};
             if(p.is_absolute())
             {
-                candidate = p;
-                if(!fs::exists(candidate))
+                result = p;
+                if(!fs::exists(result))
                 {
                     errorMessage = "not found";
                     return {};
                 }
             }
-            else
+
+            if(result.empty() && local && !_sourcesStack.empty())
             {
-                fs::path base;
+                fs::path base = fs::absolute(_sourcesStack.back()._source->_file).remove_filename();
+                if(fs::path candidate{base / p}; fs::exists(candidate))
+                {
+                    result = std::move(candidate);
+                }
+            }
 
-                if(_sourcesStack.empty())
+            if(result.empty())
+            {
+                for(const std::string& base : _cfg._includeDirectories)
                 {
-                    base = fs::current_path();
-                }
-                else
-                {
-                    base = fs::absolute(_sourcesStack.back()._source->_file).remove_filename();
-                }
-
-                if(fs::exists(base / p))
-                {
-                    candidate = base / p;
-                }
-                else
-                {
-                    for(const std::string& b : _cfg._includeDirectories)
+                    if(fs::path candidate{base / p}; fs::exists(candidate))
                     {
-                        if(fs::exists(b / p))
-                        {
-                            candidate = b / p;
-                            break;
-                        }
+                        result = std::move(candidate);
+                        break;
                     }
                 }
             }
-            if(!fs::exists(candidate))
+
+            if(result.empty() || !fs::exists(result))
             {
                 errorMessage = "not found";
                 return {};
             }
 
-            if(fs::is_symlink(candidate))
+            if(fs::is_symlink(result))
             {
-                candidate = fs::read_symlink(candidate);
+                result = fs::read_symlink(result);
             }
 
-            if(fs::is_regular_file(candidate))
+            if(fs::is_regular_file(result))
             {
-                candidate = candidate.lexically_normal();
-                return candidate.generic_string();
+                result = result.lexically_normal();
+                return result.generic_string();
             }
 
             errorMessage = "is not a regular file";

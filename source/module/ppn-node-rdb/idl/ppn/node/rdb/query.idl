@@ -9,7 +9,7 @@
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
 require "pql.idl"
-require "ppn/node/link/remote.idl"
+require <ppn/node/link/remote.idl>
 
 scope ppn::node::rdb
 {

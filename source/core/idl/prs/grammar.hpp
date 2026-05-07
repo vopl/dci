@@ -75,6 +75,7 @@ namespace dci::idl::prs::grammar
 #define ALL                                     \
         ONE(identifier,     std::string)        \
         ONE(quotedString,   std::string)        \
+        ONE(abracketString, std::string)        \
         ONE(integerString,  std::string)        \
         ONE(primitive,      Primitive)          \
         ONE(tuple,          Tuple)              \
@@ -120,6 +121,9 @@ namespace dci::idl::prs::grammar
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     constexpr auto quotedString_def = x3::lexeme[x3::lit('"') >> *((x3::char_-'"') | (x3::lit('\\') >> (x3::char_('"') | x3::char_('\\')))) >> x3::lit('"')];
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    constexpr auto abracketString_def = x3::lexeme[x3::lit('<') >> *((x3::char_-'>') | (x3::lit('\\') >> (x3::char_('>') | x3::char_('\\')))) >> x3::lit('>')];
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     constexpr auto integerString_def = x3::lexeme[(x3::string("0x") >> *x3::xdigit) | (-x3::char_('-') >> *x3::digit)];
@@ -485,7 +489,8 @@ namespace dci::idl::prs::grammar
         kw("include") >>
         x3::eps[([](auto& ctx){ x3::get<State>(ctx).storePos(_where(ctx).begin()); })] >>
         (
-            quotedString[([](auto& ctx){ const Scope res = x3::get<State>(ctx).process(_attr(ctx), false); if(res) x3::_val(ctx) = res->decls; })] |
+            quotedString[([](auto& ctx){ const Scope res = x3::get<State>(ctx).process(_attr(ctx), true, false); if(res) x3::_val(ctx) = res->decls; })] |
+            abracketString[([](auto& ctx){ const Scope res = x3::get<State>(ctx).process(_attr(ctx), false, false); if(res) x3::_val(ctx) = res->decls; })] |
             error("file name expected")
         );
 
@@ -494,7 +499,8 @@ namespace dci::idl::prs::grammar
         kw("require") >>
         x3::eps[([](auto& ctx){ x3::get<State>(ctx).storePos(_where(ctx).begin()); })] >>
         (
-            quotedString[([](auto& ctx){ const Scope res = x3::get<State>(ctx).process(_attr(ctx), true); if(res) x3::_val(ctx) = res->decls; })] |
+            quotedString[([](auto& ctx){ const Scope res = x3::get<State>(ctx).process(_attr(ctx), true, true); if(res) x3::_val(ctx) = res->decls; })] |
+            abracketString[([](auto& ctx){ const Scope res = x3::get<State>(ctx).process(_attr(ctx), false, true); if(res) x3::_val(ctx) = res->decls; })] |
             error("file name expected")
         );
 

@@ -23,14 +23,14 @@ namespace dci::idl::prs
         State(const Config& cfg, std::vector<im::ErrorInfo>& errors, std::vector<std::string>& sourceFilesParsed);
         ~State();
 
-        im::ast::Scope process(const std::string& fileName, bool once = true);
+        im::ast::Scope process(const std::string& fileName, bool local = false, bool once = true);
         void storePos(Iterator pos);
         im::PosInSources pos2Im(Iterator pos);
 
         void pushError(const std::string& msg, const Iterator& pos);
 
     private:
-        std::string resolveFileName(const std::string& in, std::string& errorMessage);
+        std::string resolveFileName(bool local, const std::string& in, std::string& errorMessage);
 
     private:
         const Config&                   _cfg;
