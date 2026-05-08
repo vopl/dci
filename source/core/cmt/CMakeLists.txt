@@ -25,7 +25,7 @@ if(WIN32)
 endif()
 
 ############################################################
-find_package(Boost REQUIRED COMPONENTS context)
+find_package(Boost REQUIRED COMPONENTS context CONFIG)
 set(HAVE_BOOSTCONTEXT ON)
 
 

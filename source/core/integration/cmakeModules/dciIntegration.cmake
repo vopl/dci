@@ -43,7 +43,13 @@ if(NOT COMMAND dciIntegration)
         foreach(dir ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${DCI_SRC_DIR})
             if(EXISTS ${dir}/cmakeModules/dciBuiltUnits.cmake)
                 set(DCI_OUT_DIR ${dir})
-                include(${dir}/cmakeModules/dciBuiltUnits.cmake)
+                include(${DCI_OUT_DIR}/cmakeModules/dciBuiltUnits.cmake)
+
+                file(GLOB_RECURSE tmpInc ${DCI_OUT_DIR}/include/*)
+                file(GLOB_RECURSE tmpIdl ${DCI_OUT_DIR}/idl/*)
+                file(GLOB_RECURSE tmpCmm ${DCI_OUT_DIR}/cmakeModules/*)
+                add_library(api INTERFACE EXCLUDE_FROM_ALL ${tmpInc} ${tmpIdl} ${tmpCmm})
+
                 break()
             endif()
         endforeach()
@@ -65,9 +71,11 @@ if(NOT COMMAND dciIntegration)
                 execute_process(
                     COMMAND ${GIT_EXECUTABLE} rev-parse --abbrev-ref HEAD
                     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                    ERROR_VARIABLE tmpErr
                     OUTPUT_VARIABLE DCI_SRC_BRANCH
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
-            else()
+            endif()
+            if(NOT DCI_SRC_BRANCH)
                 set(DCI_SRC_BRANCH "")
             endif()
         endif()
@@ -79,9 +87,11 @@ if(NOT COMMAND dciIntegration)
                 execute_process(
                     COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
                     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                    ERROR_VARIABLE tmpErr
                     OUTPUT_VARIABLE DCI_SRC_REVISION
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
-            else()
+            endif()
+            if(NOT DCI_SRC_REVISION)
                 set(DCI_SRC_REVISION "0000000000000000000000000000000000000000")
             endif()
         endif()
@@ -93,9 +103,11 @@ if(NOT COMMAND dciIntegration)
                 execute_process(
                     COMMAND ${GIT_EXECUTABLE} show -s --format=%at ${DCI_SRC_REVISION}
                     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                    ERROR_VARIABLE tmpErr
                     OUTPUT_VARIABLE DCI_SRC_MOMENT
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
-            else()
+            endif()
+            if(NOT DCI_SRC_MOMENT)
                 set(DCI_SRC_MOMENT 0)
             endif()
         endif()

@@ -39,7 +39,7 @@ if(UNIX)
     target_link_libraries(${UNAME}-lib PRIVATE dl)
 endif()
 
-find_package(Boost REQUIRED COMPONENTS program_options filesystem)
+find_package(Boost REQUIRED COMPONENTS program_options filesystem CONFIG)
 target_link_libraries(${UNAME}-lib PRIVATE Boost::program_options Boost::filesystem)
 
 ############################################################

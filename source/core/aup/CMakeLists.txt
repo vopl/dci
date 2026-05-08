@@ -77,7 +77,7 @@ if(dciIntegrationStage2)
         logger
     )
 
-    find_package(Boost REQUIRED COMPONENTS program_options)
+    find_package(Boost REQUIRED COMPONENTS program_options CONFIG)
     target_link_libraries(${UNAME}-collector PRIVATE Boost::program_options)
 endif()
 
