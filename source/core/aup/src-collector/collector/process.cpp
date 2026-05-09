@@ -427,7 +427,7 @@ namespace dci::aup
                             dbgDeps += processFileDebug(t, absAndRel(t, dep));
                         }
 
-                        processFile(t, dep, t._kind, dbgDeps);
+                        processFile(t, dep, catalog::File::Kind::rdep, dbgDeps);
                     }
                 }
             }
