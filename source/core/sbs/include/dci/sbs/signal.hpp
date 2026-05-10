@@ -11,7 +11,6 @@
 #pragma once
 
 #include "wire/callback.hpp"
-#include "wire/transfer.hpp"
 #include "box.hpp"
 #include "owner.hpp"
 

@@ -91,7 +91,7 @@ namespace dci::module::www::channelSoftClosing
         Instance::Channel::~Channel()
         {
             _sol.flush();
-            if(_target && _target.involved())
+            if(_target && _target.isInvolved())
             {
                 _target->close();
             }

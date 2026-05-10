@@ -11,6 +11,7 @@
 #pragma once
 
 #include <dci/sbs/owner.hpp>
+#include <dci/sbs/signal/adapter.hpp>
 
 #include "../contract/id.hpp"
 #include "../contract/lid.hpp"
@@ -126,9 +127,11 @@ namespace dci::idl::interface
         Lid mdLid() const;
         Id mdId() const;
 
-        bool involved() const;
+        bool isInvolved() const;
 
         sbs::Signal<void, bool> involvedChanged() const;
+        auto involved() const;
+        auto uninvolved() const;
 
         const Methods<C, s>* methods() const;
         const Methods<C, s>* operator->() const;
@@ -572,7 +575,7 @@ namespace dci::idl::interface
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <template <Side> class C, Side s>
-    bool ImplBase<C, s>::involved() const
+    bool ImplBase<C, s>::isInvolved() const
     {
         dbgAssert(mdcState());
 
@@ -598,6 +601,32 @@ namespace dci::idl::interface
         }
 
         return mdcState()->_useCounterPrimary.involvedChanged();
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <template <Side> class C, Side s>
+    auto ImplBase<C, s>::involved() const
+    {
+        return sbs::signal::Adapter{[](auto&& f, bool v)
+        {
+            if(v)
+            {
+                std::forward<decltype(f)>(f)();
+            }
+        }, involvedChanged()};
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <template <Side> class C, Side s>
+    auto ImplBase<C, s>::uninvolved() const
+    {
+        return sbs::signal::Adapter{[](auto&& f, bool v)
+        {
+            if(!v)
+            {
+                std::forward<decltype(f)>(f)();
+            }
+        }, involvedChanged()};
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

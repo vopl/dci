@@ -254,7 +254,7 @@ namespace dci::module::ppn::service
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Dht::updateReadyStatus()
     {
-        bool ready = _nodeStarted  && _localIdSetted && _local.involved() && _remotes.size() >= 2;
+        bool ready = _nodeStarted  && _localIdSetted && _local.isInvolved() && _remotes.size() >= 2;
 
         if(ready)
         {
