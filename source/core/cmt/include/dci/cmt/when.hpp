@@ -21,8 +21,8 @@ namespace dci::cmt
     template <details::CWaitableOrContainer... Waitables> Future<void>        whenAll(Waitables&...);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    template <details::CExpr Expr> std::bitset<details::expr::countWaitables<Expr>> when(Expr&& expr);
-    template <details::CVSrc VSrc> std::bitset<1                                  > when(VSrc&& vSrc);
+    template <details::CExpr Expr> Future<std::bitset<details::expr::countWaitables<Expr>>> when(Expr&& expr);
+    template <details::CVSrc VSrc> Future<std::bitset<1                                  >> when(VSrc&& vSrc);
 }
 
 namespace dci::cmt
@@ -38,12 +38,12 @@ namespace dci::cmt
         return details::waiterCaller<details::Kind::all, false>(waitables...);
     }
 
-    template <details::CExpr Expr> std::bitset<details::expr::countWaitables<Expr>()> when(Expr&& expr)
+    template <details::CExpr Expr> Future<std::bitset<details::expr::countWaitables<Expr>()>> when(Expr&& expr)
     {
         return details::waiterCaller<details::Kind::expr, false>(expr);
     }
 
-    template <details::CVSrc VSrc> std::bitset<1> when(VSrc&& vSrc)
+    template <details::CVSrc VSrc> Future<std::bitset<1>> when(VSrc&& vSrc)
     {
         return when(details::Val{&vSrc});
     }

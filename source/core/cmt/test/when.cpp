@@ -160,3 +160,93 @@ TEST(cmt, when)
     executeReadyFibers();
     EXPECT_TRUE(allDone);
 }
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+TEST(cmt, whenDynamic)
+{
+    bool allDone = false;
+    spawn() += [&]
+    {
+        {
+            Event e;
+            Mutex m;
+            m.lock();
+
+            std::vector<dci::cmt::Waitable*> all{&e, &m};
+
+            std::size_t progress{};
+            spawn() += [&]
+            {
+                waitAll(all);
+                progress++;
+                EXPECT_TRUE(!m.canLock());
+                m.unlock();
+            };
+
+            yield();
+            EXPECT_EQ(progress, 0);
+
+            e.raise();
+            yield();
+            EXPECT_EQ(progress, 0);
+
+            m.unlock();
+            yield();
+            EXPECT_EQ(progress, 1);
+            EXPECT_TRUE(m.canLock());
+        }
+
+        allDone = true;
+    };
+
+    executeReadyFibers();
+    EXPECT_TRUE(allDone);
+}
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+TEST(cmt, whenExpr)
+{
+    bool done{};
+    spawn() += [&]
+    {
+        {
+            Event e0, e1, e2;
+
+            auto res1 = when(e1 || e0);
+            auto res2 = when(e1 && e0);
+            auto res3 = when(!e2 && e1 && e0);
+
+            yield();
+
+            e2.raise();
+
+            EXPECT_FALSE(res1.resolved());
+            EXPECT_FALSE(res2.resolved());
+            EXPECT_FALSE(res3.resolved());
+
+            e1.raise();
+
+            EXPECT_TRUE(res1.waitValue());
+            EXPECT_EQ(res1.value(), (std::bitset<2>{0b10}));
+            EXPECT_FALSE(res2.resolved());
+            EXPECT_FALSE(res3.resolved());
+
+            e0.raise();
+
+            EXPECT_TRUE(res2.waitValue());
+            EXPECT_EQ(res2.value(), (std::bitset<2>{0b11}));
+            EXPECT_FALSE(res3.resolved());
+
+            e0.raise();
+            e2.reset();
+
+            EXPECT_TRUE(res3.waitValue());
+            EXPECT_EQ(res3.value(), (std::bitset<3>{0b011}));
+
+            done = true;
+        }
+    };
+
+    executeReadyFibers();
+    EXPECT_TRUE(done);
+}

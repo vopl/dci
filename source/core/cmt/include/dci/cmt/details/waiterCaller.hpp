@@ -391,93 +391,122 @@ namespace dci::cmt::details
         expr
     };
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    struct DynamicState_any
+    namespace asyncWaiterCaller
     {
-        std::size_t _acquiredIndex{};
-    };
 
-    struct DynamicState_all
-    {
-    };
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        template <Kind kind, class... Waitables>
+        struct DynamicStateBase;
 
-    template <class... Waitables>
-    struct DynamicState_expr : ExprEngine<Waitables...>
-    {
-    };
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        template <class... Waitables>
+        struct DynamicStateBase<Kind::any, Waitables...>
+        {
+            static constexpr bool linksSizeIsConst = (CWaitable<Waitables>&& ...);
+            using LinksT = Links<linksSizeIsConst, false, Waitables...>;
+            using PromiseT = cmt::Promise<std::size_t>;
+
+            std::size_t _acquiredIndex{};
+
+            void exec(Waiter& waiter)
+            {
+                waiter.any(&this->_acquiredIndex);
+            }
+
+            void resolve(PromiseT& promise)
+            {
+                promise.resolveValue(_acquiredIndex);
+            }
+        };
+
+        template <class... Waitables>
+        struct DynamicStateBase<Kind::all, Waitables...>
+        {
+            static constexpr bool linksSizeIsConst = (CWaitable<Waitables>&& ...);
+            using LinksT = Links<linksSizeIsConst, false, Waitables...>;
+            using PromiseT = cmt::Promise<>;
+
+            void exec(Waiter& waiter)
+            {
+                waiter.all();
+            }
+
+            void resolve(PromiseT& promise)
+            {
+                promise.resolveValue();
+            }
+        };
+
+        template <class... Waitables>
+        struct DynamicStateBase<Kind::expr, Waitables...>
+        {
+            using LinksT = ExprLinks<Waitables...>;
+            using PromiseT = cmt::Promise<std::bitset<expr::countWaitables<Waitables...>()>>;
+
+            ExprEngine<Waitables...> _ee;
+
+            void exec(Waiter& waiter)
+            {
+                waiter.expr(&ExprEngine<Waitables...>::eval, &_ee, _ee.bits4Waiter());
+            }
+
+            void resolve(PromiseT& promise)
+            {
+                promise.resolveValue(_ee.bits4Result());
+            }
+        };
+    }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <Kind kind, bool sync=true, class... Waitables>
     auto waiterCaller(Waitables&... waitables)
     {
-        static constexpr bool linksSizeIsConst = (CWaitable<Waitables>&& ...) || Kind::expr == kind;
+        static constexpr bool linksSizeIsConst = (CWaitable<Waitables>&& ...);
 
         if constexpr(sync)
         {
-            auto exec = [](auto&& links)
+            if constexpr(Kind::expr == kind)
             {
-                if constexpr(Kind::any == kind)
-                {
-                    std::size_t acquiredIndex{};
-                    Waiter{links._data, links._size}.any(&acquiredIndex);
-                    return acquiredIndex;
-                }
-
-                if constexpr(Kind::all == kind)
-                {
-                    Waiter{links._data, links._size}.all();
-                    return;
-                }
-
-                if constexpr(Kind::expr == kind)
-                {
-                    ExprEngine<Waitables...> ee{};
-                    Waiter{links._data, links._size}.expr(&ExprEngine<Waitables...>::eval, &ee, ee.bits4Waiter());
-                    return ee.bits4Result();
-                }
-            };
-
-            if constexpr(linksSizeIsConst && Kind::expr != kind)
-                return exec(Links<linksSizeIsConst, false, Waitables...>{waitables...});
-            else if constexpr(linksSizeIsConst && Kind::expr == kind)
-                return exec(ExprLinks<Waitables...>{waitables...});
+                ExprLinks<Waitables...> links{waitables...};
+                ExprEngine<Waitables...> ee{};
+                Waiter{links._data, links._size}.expr(&ExprEngine<Waitables...>::eval, &ee, ee.bits4Waiter());
+                return ee.bits4Result();
+            }
             else
             {
-                std::size_t linksAmount = links::countWaitables(waitables...);
-                return exec(Links<linksSizeIsConst, true, Waitables...>{linksAmount, alloca(sizeof(WWLink) * linksAmount), waitables...});
+                auto exec = [](auto&& links)
+                {
+                    Waiter waiter{links._data, links._size};
+                    if constexpr(Kind::any == kind)
+                    {
+                        std::size_t acquiredIndex{};
+                        waiter.any(&acquiredIndex);
+                        return acquiredIndex;
+                    }
+                    else //if constexpr(Kind::all == kind)
+                        waiter.all();
+                };
+
+                if constexpr(linksSizeIsConst)
+                    return exec(Links<linksSizeIsConst, false, Waitables...>{waitables...});
+                else
+                {
+                    std::size_t linksAmount = links::countWaitables(waitables...);
+                    return exec(Links<false, true, Waitables...>{linksAmount, alloca(sizeof(WWLink) * linksAmount), waitables...});
+                }
             }
         }
-        else //cmt
+        else //async
         {
-            using DynamicStateBase = decltype([]
-            {
-                if constexpr(Kind::any == kind)
-                    return DynamicState_any{};
-                if constexpr(Kind::all == kind)
-                    return DynamicState_all{};
-                if constexpr(Kind::expr == kind)
-                    return DynamicState_expr<Waitables...>{};
-            }());
-
+            using Base = asyncWaiterCaller::DynamicStateBase<kind, Waitables...>;
             struct DynamicState
                 : mm::heap::Allocable<DynamicState>
-                , DynamicStateBase
+                , Base
             {
-                using Promise = cmt::Promise<
-                    decltype([]
-                    {
-                        if constexpr(Kind::any == kind)
-                            return std::size_t{};
-                        if constexpr(Kind::all == kind)
-                            return;
-                        if constexpr(Kind::expr == kind)
-                            return std::bitset<expr::countWaitables<Waitables...>()>{};
-                    }())>;
-
-                Links<linksSizeIsConst, false, Waitables...>    _links;
-                Waiter                                          _waiter;
-                sbs::Owner                                      _sbsOwner;
-                Promise                                         _promise;
+                Base::LinksT    _links;
+                Waiter          _waiter;
+                sbs::Owner      _sbsOwner;
+                Base::PromiseT  _promise;
 
                 DynamicState(Waitables&... waitables)
                     : _links{waitables...}
@@ -489,44 +518,17 @@ namespace dci::cmt::details
                     };
                 }
 
-                ~DynamicState()
+                Base::PromiseT::Future exec()
                 {
-                    _sbsOwner.flush();
-                    _waiter.reset();
-                }
-
-                auto exec()
-                {
-                    auto res = _promise.future();
-
-                    if constexpr(Kind::any == kind)
-                        _waiter.any(&this->_acquiredIndex);
-
-                    if constexpr(Kind::all == kind)
-                        _waiter.all();
-
-                    if constexpr(Kind::expr == kind)
-                    {
-                        _waiter.expr(
-                                    &ExprEngine<Waitables...>::eval, static_cast<ExprEngine<Waitables...>*>(this),
-                                    this->bits4Waiter(),
-                                    &DynamicState::callback, this);
-                    }
-
+                    typename Base::PromiseT::Future res = _promise.future();
+                    Base::exec(_waiter);
                     return res;
                 }
 
                 static void callback(void* cbData)
                 {
                     DynamicState* self = static_cast<DynamicState *>(cbData);
-
-                    if constexpr(Kind::any == kind)
-                        self->_promise.resolveValue(self->_acquiredIndex);
-                    if constexpr(Kind::all == kind)
-                        self->_promise.resolveValue();
-                    if constexpr(Kind::expr == kind)
-                        self->_promise.resolveValue(self->bits4Result());
-
+                    self->Base::resolve(self->_promise);
                     delete self;
                 }
             };
