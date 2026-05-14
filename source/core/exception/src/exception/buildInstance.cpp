@@ -9,10 +9,25 @@
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
 #include <dci/exception/buildInstance.hpp>
+#include <dci/utils/b2h.hpp>
+#include <stdexcept>
 #include "registry.hpp"
 
 namespace dci::exception
 {
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    [[noreturn]] void throwInstance(const Eid& eid, const std::exception_ptr& cause)
+    {
+        auto iter = registry::map().find(eid);
+        if(registry::map().end() == iter)
+        {
+            throw std::runtime_error{"unknown eid: " + dci::utils::b2h(eid)};
+        }
+
+        std::rethrow_exception(iter->second._factory(cause));
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     std::exception_ptr buildInstance(const Eid& eid, const std::exception_ptr& cause)
     {
         auto iter = registry::map().find(eid);
