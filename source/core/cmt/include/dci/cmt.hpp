@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cmt/functions.hpp"
+#include "cmt/sbsSugar.hpp"
 
 #include "cmt/task/body.hpp"
 #include "cmt/task/owner.hpp"

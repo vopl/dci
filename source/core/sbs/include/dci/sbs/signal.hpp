@@ -35,6 +35,9 @@ namespace dci::sbs
         template <class F>
         void connect(Owner& owner, F&& f) requires wire::Callback<R, F, Args...>::_valid;
 
+        template <class F>
+        void connect(Owner* owner, F&& f) requires wire::Callback<R, F, Args...>::_valid;
+
     private:
         Box* _box{};
     };
@@ -57,9 +60,7 @@ namespace dci::sbs
     template <class F>
     void Signal<R, Args...>::connect(F&& f) requires wire::Callback<R, F, Args...>::_valid
     {
-        Subscription* s = new wire::Callback<R, F, Args...>{nullptr, std::forward<F>(f)};
-
-        _box->push(s);
+        return connect(nullptr, std::forward<F>(f));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -67,49 +68,57 @@ namespace dci::sbs
     template <class F>
     void Signal<R, Args...>::connect(Owner& owner, F&& f) requires wire::Callback<R, F, Args...>::_valid
     {
-        Subscription* s = new wire::Callback<R, F, Args...>{&owner, std::forward<F>(f)};
+        return connect(&owner, std::forward<F>(f));
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    template <class R, class... Args>
+    template <class F>
+    void Signal<R, Args...>::connect(Owner* owner, F&& f) requires wire::Callback<R, F, Args...>::_valid
+    {
+        Subscription* s = new wire::Callback<R, F, Args...>{owner, std::forward<F>(f)};
 
         _box->push(s);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class SR=void, class... SArgs, class F>
-    void operator+=(Signal<SR, SArgs...>&& signal, F&& f)
+    void operator+=(Signal<SR, SArgs...>&& signal, F&& f) requires wire::Callback<SR, F, SArgs...>::_valid
     {
         signal.connect(std::forward<F>(f));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class SR=void, class... SArgs, class F>
-    void operator+=(Signal<SR, SArgs...>& signal, F&& f)
+    void operator+=(Signal<SR, SArgs...>& signal, F&& f) requires wire::Callback<SR, F, SArgs...>::_valid
     {
         signal.connect(std::forward<F>(f));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class SR=void, class... SArgs, class F>
-    void operator+=(Signal<SR, SArgs...>&& signal, OwnedFunctor<F>&& of)
+    void operator+=(Signal<SR, SArgs...>&& signal, OwnedFunctor<F>&& of) requires wire::Callback<SR, F, SArgs...>::_valid
     {
         signal.connect(of._owner, std::forward<F>(of._f));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class SR=void, class... SArgs, class F>
-    void operator+=(Signal<SR, SArgs...>&& signal, OwnedFunctor<F>& of)
+    void operator+=(Signal<SR, SArgs...>&& signal, OwnedFunctor<F>& of) requires wire::Callback<SR, F, SArgs...>::_valid
     {
         signal.connect(of._owner, of._f);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class SR=void, class... SArgs, class F>
-    void operator+=(Signal<SR, SArgs...>& signal, OwnedFunctor<F>&& of)
+    void operator+=(Signal<SR, SArgs...>& signal, OwnedFunctor<F>&& of) requires wire::Callback<SR, F, SArgs...>::_valid
     {
         signal.connect(of._owner, std::forward<F>(of._f));
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     template <class SR=void, class... SArgs, class F>
-    void operator+=(Signal<SR, SArgs...>& signal, OwnedFunctor<F>& of)
+    void operator+=(Signal<SR, SArgs...>& signal, OwnedFunctor<F>& of) requires wire::Callback<SR, F, SArgs...>::_valid
     {
         signal.connect(of._owner, of._f);
     }
