@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "../api.hpp"
-#include <compare>
+#include "api.hpp"
 #include <dci/bytes/implMetaInfo.hpp>
 #include <dci/himpl.hpp>
 #include <dci/primitives.hpp>
+#include <compare>
 
 namespace dci
 {

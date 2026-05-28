@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../api.hpp"
+#include "api.hpp"
 #include <dci/bytes/implMetaInfo.hpp>
 #include <dci/himpl.hpp>
 #include <dci/primitives.hpp>
