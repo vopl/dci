@@ -73,7 +73,7 @@ namespace dci::qml::eventDispatcher
 
                 if(snp->isEnabled())
                 {
-                    QApplication::sendEvent(snp, &qe);
+                    QCoreApplication::sendEvent(snp, &qe);
                     res = true;
                 }
             }

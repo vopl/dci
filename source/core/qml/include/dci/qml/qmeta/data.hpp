@@ -317,7 +317,16 @@ namespace dci::qml::qmeta
             return []<class... E1, class... E2, class... E3>(TList<E1...>, TList<E2...>, TList<E3...>)
             {
                 if constexpr(sizeof...(E1) + sizeof...(E2) + sizeof...(E3))
-                    return qt_metaTypeArray<E1..., E2..., E3...>;
+                {
+                    static constexpr std::array<const QtPrivate::QMetaTypeInterface*, sizeof...(E1) + sizeof...(E2) + sizeof...(E3)> result
+                    {
+                        QtPrivate::qMetaTypeInterfaceForType<E1>()...,
+                        QtPrivate::qMetaTypeInterfaceForType<E2>()...,
+                        QtPrivate::qMetaTypeInterfaceForType<E3>()...
+                    };
+                    return result.data();
+                    //return qt_metaTypeArray<E1..., E2..., E3...>;
+                }
                 else
                     return nullptr;
             }(PropsMetaTypes{}, MethsMetaTypes{}, CtorsMetaTypes{});

@@ -15,11 +15,8 @@
 #   include <sys/eventfd.h>
 #endif
 
-#include <qpa/qwindowsysteminterface.h>
-
 #ifdef __unix__
 #   include <QtGui/qpa/qplatformintegration.h>
-#   include <QtWidgets/private/qapplication_p.h>
 QT_BEGIN_NAMESPACE
 
     //хак для активации процессора событий XCB
@@ -32,9 +29,11 @@ QT_BEGIN_NAMESPACE
     struct Stub1 {virtual ~Stub1();};
     struct Stub2 {virtual ~Stub2();};
 
-    struct QXcbIntegrationStub : public QPlatformIntegration
+    struct QXcbIntegrationChimera : public QPlatformIntegration
     #ifndef QT_NO_OPENGL
+    # if QT_CONFIG(xcb_glx_plugin)
         , public Stub1
+    # endif
     # if QT_CONFIG(egl)
         , public Stub2
     # endif
@@ -87,10 +86,9 @@ namespace dci::qml
         //хак для активации процессора событий XCB
         void processXcb(QEventLoop::ProcessEventsFlags flags)
         {
-            QPlatformIntegration* qtpi = QApplicationPrivate::platformIntegration();
-            if(qtpi)
+            if(QPlatformIntegration* qtpi = QGuiApplicationPrivate::platformIntegration())
             {
-                static_cast<QXcbIntegrationStub*>(qtpi)->connection()->processXcbEvents(flags);
+                static_cast<QXcbIntegrationChimera*>(qtpi)->connection()->processXcbEvents(flags);
             }
         }
     }
@@ -101,7 +99,7 @@ namespace dci::qml
     {
 #ifdef __unix__
         //хак для активации процессора событий XCB
-        static bool isXcb = "xcb" == QApplication::platformName();
+        static bool isXcb = "xcb" == QGuiApplication::platformName();
 #endif
 
         bool res = false;

@@ -11,16 +11,18 @@
 #include <dci/test.hpp>
 #include <dci/qml/qmeta.hpp>
 #include <dci/qml/app.hpp>
+#include <dci/cmt.hpp>
+#include <dci/poll.hpp>
 
 
 #include <QObject>
 
-struct Maker
-{
-    Q_GADGET
+// struct Maker
+// {
+//     Q_GADGET
 
-    int l;
-};
+//     int l;
+// };
 
 using namespace dci;
 using namespace dci::idl;

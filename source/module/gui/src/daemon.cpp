@@ -9,37 +9,72 @@
 // b15a37183c32a03cae506ae094d1894df6baf99664684d8534c56d9acdecdccf
 
 #include "pch.hpp"
-#include <dci/qml/app.hpp>
-#include "impl/app.hpp"
+#include "daemon.hpp"
+#include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlApplicationEngine>
 
-namespace dci::qml
+extern "C"
+{
+    extern dci::host::module::Entry* dciModuleEntry;
+}
+
+namespace dci::module::gui
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    AppPtr App::instance()
-    {
-        return impl::App::instance();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    App::~App()
+    Daemon::Daemon()
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QGuiApplication* App::qapp()
+    Daemon::~Daemon()
     {
-        return impl().qapp();
+        _app.reset();
+        _epExtensionInstance.reset();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QQmlApplicationEngine* App::qengine()
+    void Daemon::startImpl(idl::gen::Config&& config)
     {
-        return impl().qengine();
+        (void)config;
+
+        dbgAssert(!_app);
+        _app = qml::App::instance();
+
+
+        dbgAssert(!_qmlContext);
+        _qmlContext = new QQmlContext{_app->qengine(), static_cast<QObject*>(_app->qengine())};
+
+        dbgAssert(!_epExtensionInstance);
+        _epExtensionInstance = qml::ep::uniqueExtension([this]()
+        {
+            dbgAssert(_app);
+            dbgAssert(_qmlContext);
+
+            QQmlComponent* c = new QQmlComponent
+            {
+                _app->qengine(),
+                QString{"../module/gui/qml/Entry.qml"},
+                QQmlComponent::PreferSynchronous
+            };
+
+            _app->qengine()->setContextForObject(c, _qmlContext);
+
+            return c;
+        }, "entry");
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QObject* App::App::loadScript(const QString& filePath)
+    void Daemon::stopImpl()
     {
-        return impl().loadScript(filePath);
+        _epExtensionInstance.reset();
+        _app.reset();
+        dbgAssert(!_qmlContext);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    idl::Interface Daemon::serviceImpl()
+    {
+        return idl::Interface{};
     }
 }

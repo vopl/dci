@@ -1,9 +1,16 @@
-return()
-
 include(dciIntegrationUnit)
 dciIntegrationUnit(qml
         INCLUDE_DIRS include
         DEPENDS poll idl primitives)
+
+if(WIN32)
+    set(needQtComponents)
+else()
+    set(needQtComponents XcbQpaPrivate)
+endif()
+
+find_package(Qt6 COMPONENTS CorePrivate GuiPrivate Quick ${needQtComponents} REQUIRED)
+qt_standard_project_setup()
 
 ############################################################
 file(GLOB_RECURSE INC include/*)
@@ -25,27 +32,19 @@ target_link_libraries(${UNAME} PRIVATE
     utils
     poll
     logger
-    Qt6::Quick
-    Qt6::Widgets)
+    Qt6::CorePrivate
+    Qt6::GuiPrivate
+    Qt6::Quick)
 
-
-if(WIN32)
-    set(needQtComponents)
-else()
-    set(needQtComponents XcbQpaPrivate)
+if(NOT WIN32)
     target_link_libraries(${UNAME} PRIVATE Qt6::XcbQpaPrivate)
 endif()
-
-find_package(Qt6 COMPONENTS Core Quick Widgets ${needQtComponents} REQUIRED)
-get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
 
 ############################################################
 include(dciHimpl)
 dciHimplMakeLayouts(${UNAME}
     INCLUDE
         src
-        ${Qt6Quick_INCLUDE_DIRS}
-        ${Qt6Quick_PRIVATE_INCLUDE_DIRS}
 
     OUTPUT
         dci/qml/implMetaInfo.hpp
@@ -57,16 +56,10 @@ dciHimplMakeLayouts(${UNAME}
         dci::qml::impl::App
 
     LINK
+        Qt6::CorePrivate
+        Qt6::GuiPrivate
         Qt6::Quick
-        Qt6::Widgets
 )
-
-target_include_directories(${UNAME} SYSTEM PRIVATE
-    ${Qt6Quick_INCLUDE_DIRS}
-    ${Qt6Quick_PRIVATE_INCLUDE_DIRS}
-    ${Qt6Widgets_INCLUDE_DIRS}
-    ${Qt6Widgets_PRIVATE_INCLUDE_DIRS})
-target_link_libraries(${UNAME} PRIVATE Qt6::Quick)
 
 set_target_properties(${UNAME} PROPERTIES AUTOMOC On)
 set_target_properties(${UNAME} PROPERTIES AUTORCC On)
@@ -89,16 +82,25 @@ ExternalProject_Add(${UNAME}-open-sans
     #URL https://jamaica4hclubs.com/images/Fonts/open-sans.zip
     #URL_HASH SHA256=92125e92e582fe84807ac680edb369acb8fd64b7c242119834c2ad08ab847b9b
 
-    URL https://www.1001fonts.com/download/open-sans.zip
-    URL_HASH SHA256=956967e70836627cd1df713480484078dedd45a338218b902002f348c1c44358
+    # URL https://www.1001fonts.com/download/open-sans.zip
+    # URL_HASH SHA256=956967e70836627cd1df713480484078dedd45a338218b902002f348c1c44358
+
+    # SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/open-sans-src
+    # CONFIGURE_COMMAND ""
+    # BUILD_COMMAND ""
+    # INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/open-sans
+    #         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/open-sans-src ${CMAKE_CURRENT_BINARY_DIR}/open-sans
+    #         COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_CURRENT_BINARY_DIR}/open-sans/Apache License.txt"
+    #         COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_CURRENT_BINARY_DIR}/open-sans/LICENSE.txt"
+
+    URL https://mirrors.ctan.org/fonts/opensans.zip
+    URL_HASH SHA256=7249d53e6bb959353f2c911e9f30f17ca832bbf29121a87477b5580cfff3c54c
 
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/open-sans-src
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/open-sans
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/open-sans-src ${CMAKE_CURRENT_BINARY_DIR}/open-sans
-            COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_CURRENT_BINARY_DIR}/open-sans/Apache License.txt"
-            COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_CURRENT_BINARY_DIR}/open-sans/LICENSE.txt"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/open-sans-src/truetype ${CMAKE_CURRENT_BINARY_DIR}/open-sans
 )
 dciIntegrationMeta(DEPEND ${UNAME}-open-sans)
 dciIntegrationMeta(UNIT ${UNAME} TARGET ${UNAME} RESOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/open-sans lib/fonts)
@@ -116,6 +118,7 @@ function(addResourceFiles srcPrefix dstPrefix)
 endfunction()
 
 ############################################################
+get_target_property(QT_QMAKE_EXECUTABLE Qt6::qmake IMPORTED_LOCATION)
 execute_process(COMMAND ${QT_QMAKE_EXECUTABLE} -query QT_INSTALL_PLUGINS        OUTPUT_VARIABLE QT_INSTALL_PLUGINS      OUTPUT_STRIP_TRAILING_WHITESPACE)
 file(GLOB_RECURSE PLUG_FILES
     ${QT_INSTALL_PLUGINS}/audio/*
@@ -155,12 +158,6 @@ addResourceFiles(${QT_INSTALL_QML} lib/qt6/qml ${QML_FILES})
 include(dciTest)
 dciTest(${UNAME} mnone
     SRC ${TST}
-    INCLUDE
-        ${Qt6Core_PRIVATE_INCLUDE_DIRS}
-        ${Qt6Quick_INCLUDE_DIRS}
-        ${Qt6Quick_PRIVATE_INCLUDE_DIRS}
-        ${Qt6Widgets_INCLUDE_DIRS}
-        ${Qt6Widgets_PRIVATE_INCLUDE_DIRS}
     LINK
         ${UNAME}
         exception
@@ -168,6 +165,9 @@ dciTest(${UNAME} mnone
         sbs
         mm
         idl
+        poll
+        Qt6::CorePrivate
+        Qt6::GuiPrivate
         Qt6::Quick
 )
 

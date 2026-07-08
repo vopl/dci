@@ -19,18 +19,6 @@ namespace dci::qml::impl
 {
     namespace
     {
-        int fakeArgc = 0;
-
-        const char bootstrapperCode[] = R"(
-import QtQml.Models
-import dci as Dci
-DelegateModel {
-    model: Dci.Hook.allAsModel("entry");
-    delegate: Instantiator {
-        delegate: modelData
-    }
-})";
-
         void qtMsgHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
         {
             QStringList fullMsgParts;
@@ -78,13 +66,41 @@ DelegateModel {
         if(!res)
         {
             qInstallMessageHandler(qtMsgHandler);
-            QApplication::setEventDispatcher(new EventDispatcher);
-            QApplication::setQuitOnLastWindowClosed(false);
+            QCoreApplication::setEventDispatcher(new EventDispatcher);
+            QGuiApplication::setQuitOnLastWindowClosed(false);
             res.reset(himpl::impl2Face<qml::App>(new App));
             _instance = res;
         }
 
         return res;
+    }
+
+    namespace
+    {
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        int fakeArgc = 0;
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        const char bootstrapperCode[] = R"(import QtQml.Models
+import dci as Dci
+Instantiator {
+    model: Dci.Hook.allAsModel("entry");
+    delegate: Instantiator {
+        delegate: modelData
+    }
+})";
+
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    namespace
+    {
+        bool g_bugWorkaroundActivator = []
+        {
+            // https://qt-project.atlassian.net/browse/QTBUG-127281
+            qputenv("QV4_MAX_CALL_DEPTH", "8192");
+            return true;
+        }();
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -100,7 +116,7 @@ DelegateModel {
             while(!_qappStop)
             {
                 LOGI("qt app exec");
-                QApplication::exec();
+                QGuiApplication::exec();
                 LOGI("qt app done");
             }
         };
@@ -136,7 +152,7 @@ DelegateModel {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    QApplication* App::qapp()
+    QGuiApplication* App::qapp()
     {
         return &_qapp;
     }

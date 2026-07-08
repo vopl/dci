@@ -10,44 +10,17 @@
 
 #pragma once
 
-#include "pch.hpp"
-#include "../hook.hpp"
+#include <dci/host.hpp>
+#include <dci/mm/heap/allocable.hpp>
+#include <dci/qml.hpp>
 
-namespace dci::qml
+#include "host-daemon.hpp"
+#include <dci/host/daemonBase.hpp>
+
+#include <QObject>
+
+namespace dci::module::gui
 {
-    class App;
-    using AppPtr = std::shared_ptr<App>;
-}
-
-namespace dci::qml::impl
-{
-
-    class App final
-    {
-    private:
-        App(const App&) = delete;
-        void operator=(const App&) = delete;
-
-    public:
-        static qml::AppPtr instance();
-
-    public:
-        App();
-        ~App();
-
-        QGuiApplication* qapp();
-        QQmlApplicationEngine* qengine();
-
-        QObject* loadScript(const QString& filePath);
-
-    private:
-        static std::weak_ptr<qml::App> _instance;
-
-    private:
-        bool                    _qappStop {};
-        QGuiApplication         _qapp;
-        cmt::task::Owner        _mainLoopOwner;
-        QQmlApplicationEngine   _qengine;
-        Hook                    _hook;
-    };
+    using namespace dci;
+    using namespace dci::idl;
 }

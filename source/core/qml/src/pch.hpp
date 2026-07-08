@@ -21,10 +21,10 @@
 #include <sstream>
 
 #include <QtCore/private/qabstractitemmodel_p.h>
+#include <QtGui/private/qguiapplication_p.h>
 #include <QtCore>
-#include <QtWidgets>
+#include <QtGui>
 #include <QtQml>
-#undef interface
 
 #include <dci/poll.hpp>
 #include <dci/exception.hpp>

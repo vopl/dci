@@ -18,7 +18,7 @@
 
 QT_BEGIN_NAMESPACE
 class QObject;
-class QApplication;
+class QGuiApplication;
 class QQmlApplicationEngine;
 QT_END_NAMESPACE
 
@@ -40,7 +40,7 @@ namespace dci::qml
     public:
         ~App();
 
-        QApplication* qapp();
+        QGuiApplication* qapp();
         QQmlApplicationEngine* qengine();
 
         QObject* loadScript(const QString& filePath);

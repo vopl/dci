@@ -11,43 +11,25 @@
 #pragma once
 
 #include "pch.hpp"
-#include "../hook.hpp"
+#include <QPointer>
+#include <QQmlContext>
 
-namespace dci::qml
+namespace dci::module::gui
 {
-    class App;
-    using AppPtr = std::shared_ptr<App>;
-}
-
-namespace dci::qml::impl
-{
-
-    class App final
+    class Daemon
+        : public dci::host::DaemonBase<Daemon>
     {
-    private:
-        App(const App&) = delete;
-        void operator=(const App&) = delete;
-
     public:
-        static qml::AppPtr instance();
+        Daemon();
+        ~Daemon();
 
-    public:
-        App();
-        ~App();
-
-        QGuiApplication* qapp();
-        QQmlApplicationEngine* qengine();
-
-        QObject* loadScript(const QString& filePath);
+        void startImpl(idl::gen::Config&& config);
+        void stopImpl();
+        idl::Interface serviceImpl();
 
     private:
-        static std::weak_ptr<qml::App> _instance;
-
-    private:
-        bool                    _qappStop {};
-        QGuiApplication         _qapp;
-        cmt::task::Owner        _mainLoopOwner;
-        QQmlApplicationEngine   _qengine;
-        Hook                    _hook;
+        qml::AppPtr                         _app;
+        QPointer<QQmlContext>               _qmlContext;
+        std::unique_ptr<qml::ep::Extension> _epExtensionInstance;
     };
 }

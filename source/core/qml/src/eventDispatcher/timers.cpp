@@ -124,7 +124,7 @@ namespace dci::qml::eventDispatcher
             _readyStates.erase(_readyStates.begin());
 
             QTimerEvent e(s->_info.timerId);
-            QApplication::sendEvent(s->_receiver, &e);
+            QGuiApplication::sendEvent(s->_receiver, &e);
         }
 
         return res;
